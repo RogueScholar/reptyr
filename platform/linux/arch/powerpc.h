@@ -20,18 +20,35 @@
  * THE SOFTWARE.
  */
 
-#define REPTYR_VERSION "0.7.0"
+static struct ptrace_personality arch_personality[1] = {
+    {
+        offsetof(struct pt_regs, gpr[3]),
+        offsetof(struct pt_regs, gpr[3]),
+        offsetof(struct pt_regs, gpr[4]),
+        offsetof(struct pt_regs, gpr[5]),
+        offsetof(struct pt_regs, gpr[6]),
+        offsetof(struct pt_regs, gpr[7]),
+        offsetof(struct pt_regs, gpr[8]),
+        offsetof(struct pt_regs, nip),
+    }
+};
 
-#define assert_nonzero(expr) ({                         \
-            typeof(expr) __val = expr;                  \
-            if (__val == 0)                             \
-                die("Unexpected: %s == 0!\n", #expr);   \
-            __val;                                      \
-        })
+static const unsigned long r0off = offsetof(struct pt_regs, gpr[0]);
 
-int attach_child(pid_t pid, const char *pty, int force_stdio);
-int steal_pty(pid_t pid, int *pty);
-#define __printf __attribute__((format(printf, 1, 2)))
-void __printf die(const char *msg, ...) __attribute__((noreturn));
-void __printf debug(const char *msg, ...);
-void __printf error(const char *msg, ...);
+static inline void arch_fixup_regs(struct ptrace_child *child) {
+    child->regs.nip -= 4;
+}
+
+static inline int arch_set_syscall(struct ptrace_child *child,
+                                   unsigned long sysno) {
+    return ptrace_command(child, PTRACE_POKEUSER, r0off, sysno);
+}
+
+static inline int arch_save_syscall(struct ptrace_child *child) {
+    child->saved_syscall = *ptr(&child->regs, r0off);
+    return 0;
+}
+
+static inline int arch_restore_syscall(struct ptrace_child *child) {
+    return arch_set_syscall(child, child->saved_syscall);
+}

@@ -1,4 +1,4 @@
-override CFLAGS+=-Wall -Werror -D_GNU_SOURCE -g
+override CFLAGS := -Wall -Werror -D_GNU_SOURCE -g $(CFLAGS)
 OBJS=reptyr.o reallocarray.o attach.o
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
@@ -8,11 +8,15 @@ ifeq ($(UNAME_S),FreeBSD)
 	OBJS += platform/freebsd/freebsd_ptrace.o platform/freebsd/freebsd.o
 	LDFLAGS += -lprocstat
 endif
-# Note that because of how Make works, this can be overriden from the
+# Note that because of how Make works, this can be overridden from the
 # command-line.
 #
 # e.g. install to /usr with `make PREFIX=/usr`
 PREFIX=/usr/local
+BINDIR=$(PREFIX)/bin
+MANDIR=$(PREFIX)/share/man
+
+PKG_CONFIG ?= pkg-config
 
 all: reptyr
 
@@ -20,8 +24,8 @@ reptyr: $(OBJS)
 
 ifeq ($(DISABLE_TESTS),)
 test: reptyr test/victim PHONY
-	python test/basic.py
-	python test/tty-steal.py
+	python2 test/basic.py
+	python2 test/tty-steal.py
 else
 test: all
 endif
@@ -39,12 +43,18 @@ ptrace.o: ptrace.h platform/platform.h $(wildcard platform/*/arch/*.h)
 clean:
 	rm -f reptyr $(OBJS) test/victim.o test/victim
 
+BASHCOMPDIR ?= $(shell $(PKG_CONFIG) --variable=completionsdir bash-completion 2>/dev/null)
+
 install: reptyr
-	install -d -m 755 $(DESTDIR)$(PREFIX)/bin/
-	install -m 755 reptyr $(DESTDIR)$(PREFIX)/bin/reptyr
-	install -d -m 755 $(DESTDIR)$(PREFIX)/share/man/man1
-	install -m 644 reptyr.1 $(DESTDIR)$(PREFIX)/share/man/man1/reptyr.1
-	install -d -m 755 $(DESTDIR)$(PREFIX)/share/man/fr/man1
-	install -m 644 reptyr.fr.1 $(DESTDIR)$(PREFIX)/share/man/fr/man1/reptyr.1
+	install -d -m 755 $(DESTDIR)$(BINDIR)
+	install -m 755 reptyr $(DESTDIR)$(BINDIR)/reptyr
+	install -d -m 755 $(DESTDIR)$(MANDIR)/man1
+	install -m 644 reptyr.1 $(DESTDIR)$(MANDIR)/man1/reptyr.1
+	install -d -m 755 $(DESTDIR)$(MANDIR)/fr/man1
+	install -m 644 reptyr.fr.1 $(DESTDIR)$(MANDIR)/fr/man1/reptyr.1
+	bashcompdir=$(BASHCOMPDIR) ; \
+	test -z "$$bashcompdir" && bashcompdir=/etc/bash_completion.d ; \
+	install -d -m 755 $(DESTDIR)$$bashcompdir ; \
+	install -m 644 reptyr.bash $(DESTDIR)$$bashcompdir/reptyr
 
 .PHONY: PHONY
