@@ -1,5 +1,15 @@
-reptyr (0.6.2-1) unstable; urgency=low
+reptyr (0.7.0-1~ppa) disco; urgency=medium
 
+  * No-changes build from source from repository tag
+  * Add bash completion support
+  * Fix compilation with musl libc, CentOS, or GCC 7+
+  * Support for PowerPC and aarch64
+
+ -- Peter J. Mello <admin@petermello.net>  Mon, 13 May 2019 22:25:07 -0700
+
+reptyr (0.6.2-1) utopic; urgency=low
+
+  * Fix tty-stealing on i386
   * New release:
     - Fixup build for tests by adding Python dependencies and disabling
       tests when Yama would not allow them to run
@@ -7,8 +17,24 @@ reptyr (0.6.2-1) unstable; urgency=low
 
  -- Evan Broder <evan@ebroder.net>  Sun, 08 Feb 2015 14:13:04 -1000
 
-reptyr (0.5-1) unstable; urgency=low
+reptyr (0.6.1-1) utopic; urgency=low
 
+  * Fix compilation when chown is declared as `warn_unused_result`
+
+ -- Peter J. Mello <admin@petermello.net>  Thu, 18 Jan 2015 00:00:00 -0700
+
+reptyr (0.6-1) utopic; urgency=medium
+
+  * Add -T ("tty-stealing") mode, which works on processes with children.
+      See https://blog.nelhage.com/2014/08/new-reptyr-feature-tty-stealing/
+  * Added FreeBSD support
+  * Minor bugfixes
+
+ -- Peter J. Mello <admin@petermello.net>  Sun, 4 Jan 2015 00:00:00 -0700
+
+reptyr (0.5-1) saucy; urgency=low
+
+  * Add an early check and error if attaching a process with children.
   * New release (Closes: #711020):
     - Drop debian/patches/accept-cmd-line-build-flags.patch which was
       accepted upstream
@@ -21,7 +47,15 @@ reptyr (0.5-1) unstable; urgency=low
 
  -- Evan Broder <evan@ebroder.net>  Wed, 05 Jun 2013 16:20:50 -0700
 
-reptyr (0.3-2) unstable; urgency=low
+reptyr (0.4-1) precise; urgency=medium
+
+  * Add support for scripting with the -l flag.
+  * Add a French translation of the man page
+  * Add a -V flag
+
+ -- Peter J. Mello <admin@petermello.net>  Thu, 16 Aug 2012 00:00:00 -0700
+
+ reptyr (0.3-2) natty; urgency=low
 
   * Bump standards version to 3.9.2 (no changes).
   * Build for armhf (Closes: #633750)
@@ -29,8 +63,23 @@ reptyr (0.3-2) unstable; urgency=low
 
  -- Evan Broder <evan@ebroder.net>  Mon, 31 Oct 2011 12:05:33 -0400
 
-reptyr (0.3-1) unstable; urgency=low
+reptyr (0.3-1) natty; urgency=medium
 
-  * Initial release (Closes: #613123)
+  * Initial Debian release (Closes: #613123)
 
  -- Evan Broder <evan@ebroder.net>  Sun, 10 Jul 2011 08:28:45 -0700
+
+reptyr (0.2-1) maverick; urgency=low
+
+  * Add a man page
+  * Add a 'make install' target
+  * Improve detection of which fd's to attach,
+  * Add a '-s' option to attach programs not currently on a tty.
+
+ -- Peter J. Mello <admin@petermello.net>  Tue, 1 Mar 2011 00:00:00 -0700
+
+reptyr (0.1-1) maverick; urgency=medium
+
+  * Initial release
+
+ -- Peter J. Mello <admin@petermello.net>  Thu, 27 Jan 2011 00:00:00 -0700
