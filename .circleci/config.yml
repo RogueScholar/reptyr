@@ -1,0 +1,438 @@
+---
+# yamllint disable rule:key-ordering rule:quoted-strings
+version: 2.1
+executors:
+  debian-stretch:
+    docker:
+      - image: circleci/buildpack-deps:stretch
+    shell: /bin/bash
+    environment:
+      DH_VERBOSE: "1"
+  debian-buster:
+    docker:
+      - image: circleci/buildpack-deps:buster
+    shell: /bin/bash
+    environment:
+      DH_VERBOSE: "1"
+  debian-sid:
+    docker:
+      - image: circleci/buildpack-deps:sid
+    shell: /bin/bash
+    environment:
+      DH_VERBOSE: "1"
+  ubuntu-xenial:
+    docker:
+      - image: circleci/buildpack-deps:xenial
+    shell: /bin/bash
+    environment:
+      DH_VERBOSE: "1"
+  ubuntu-bionic:
+    docker:
+      - image: circleci/buildpack-deps:bionic
+    shell: /bin/bash
+    environment:
+      DH_VERBOSE: "1"
+  ubuntu-disco:
+    docker:
+      - image: circleci/buildpack-deps:disco
+    shell: /bin/bash
+    environment:
+      DH_VERBOSE: "1"
+jobs:
+  scripts_test_and_store:
+    docker:
+      - image: golang:alpine
+    working_directory: /home/circleci/packages
+    steps:
+      - run:
+          name: Update apks and install git
+          command: |
+            apk update && apk upgrade
+            apk add bash coreutils findutils git gzip openssh-client sudo tar wget xz
+      - checkout
+      - run:
+          name: Install shellcheck
+          command: |
+            cd $(mktemp -d) && wget https://shellcheck.storage.googleapis.com/shellcheck-latest.linux.x86_64.tar.xz
+            tar xvaf shellcheck-latest.linux.x86_64.tar.xz && chmod 0755 ./shellcheck-latest/shellcheck
+            sudo cp ./shellcheck-latest/shellcheck /usr/local/bin
+      - run:
+          name: Install shfmt v3
+          command: |
+            cd $(mktemp -d); go mod init tmp; go get mvdan.cc/sh/v3/cmd/shfmt
+            go build mvdan.cc/sh/v3/cmd/shfmt && go install mvdan.cc/sh/v3/cmd/shfmt
+            sudo cp -f ./shfmt /usr/local/bin
+      - run:
+          name: Test shell scripts and record file stats
+          command: |
+            set +e; set +o pipefail; mkdir -p /home/circleci/script-test-reports
+            echo "Calculating script file stats..." | tee /home/circleci/script-test-reports/script-file-stats.txt
+            echo -e '\nlines words chars filename\n' >>/home/circleci/script-test-reports/script-file-stats.txt
+            find /home/circleci -type f -name '*.sh' | xargs wc -lmw 2>&1 | tee -a \
+            /home/circleci/script-test-reports/script-file-stats.txt
+            echo "Running shellcheck tests..." | tee /home/circleci/script-test-reports/shellcheck-output.txt
+            find /home/circleci -type f -name '*.sh' | xargs shellcheck -ax -s bash 2>&1 | tee -a \
+            /home/circleci/script-test-reports/shellcheck-output.txt
+            echo "Running shfmt (v3.0.0-alpha1) tests..." | tee /home/circleci/script-test-reports/shfmt3-output.txt
+            find /home/circleci -type f -name '*.sh' | xargs shfmt -d -ci -s -i 2 2>&1 | tee -a \
+            /home/circleci/script-test-reports/shfmt3-output.txt
+      - store_artifacts:
+          path: /home/circleci/script-test-reports
+          destination: script-tests
+  build_and_test_stretch:
+    executor: debian-stretch
+    steps:
+      - checkout
+      - run:
+          name: Enable complete set of official Debian repos and install build dependencies
+          command: |
+            cat /etc/apt/sources.list
+            sudo mv -f ./.circleci/stretch-sources.list /etc/apt/sources.list
+            sudo apt update && sudo apt -y full-upgrade
+            sudo apt -y install add-apt-key adequate apt-transport-https autopkgtest binutils-multiarch build-essential \
+            check-all-the-things curl debhelper devscripts dh-acc dh-buildinfo dh-exec dh-make dh-metainit dh-migrations \
+            dh-runit dh-translations dirmngr ftp lintian man-db pbuilder piuparts pristine-tar quilt schroot \
+            software-properties-common sudo wget xz-utils
+      - run:
+          name: Build package for Debian Stretch
+          command: ./debian/make_deb_package.sh
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/stretch/reptyr_0.7.0-1_amd64.deb
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/stretch/reptyr-dbgsym_0.7.0-1_amd64.ddeb
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/stretch/reptyr_0.7.0-1.dsc
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/stretch/reptyr_0.7.0-1_amd64.changes
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/stretch/reptyr_0.7.0-1_amd64.buildinfo
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/stretch/reptyr_0.7.0-1.debian.tar.xz
+      - run:
+          name: Install built package
+          command: |
+            mkdir -p /home/circleci/deb-test-reports/stretch
+            echo -e "Installing package with dpkg...\n" | tee /home/circleci/deb-test-reports/stretch/dpkg-install-log-stretch.txt
+            sudo dpkg -D20600 --log=/home/circleci/deb-test-reports/stretch/dpkg-install-log-stretch.txt -Ri /home/circleci
+      - run:
+          name: Test package installation results with adequate
+          command: |
+            echo "Testing package install results with adequate..." | tee /home/circleci/deb-test-reports/stretch/adequate-stretch.txt
+            adequate reptyr 2>&1 | tee -a /home/circleci/deb-test-reports/stretch/adequate-stretch.txt
+      - run:
+          name: Test package installation results with piuparts
+          command: >
+            echo "Testing package install results with piuparts..."; find /home/circleci -type f -name '*.deb' |
+            sudo xargs piuparts -D debian -l /home/circleci/deb-test-reports/stretch/piuparts-stretch.txt
+      - run:
+          name: Test package installation results with check-all-the-things
+          command: |
+            echo "Testing software environment results with check-all-the-things..."
+            find /home/circleci -type f -name '*.deb' | sudo xargs check-all-the-things -a -d debian -r stretch 2>&1 | \
+            tee -a /home/circleci/deb-test-reports/stretch/check-all-the-things-stretch.txt
+      - store_artifacts:
+          path: /home/circleci/deb-test-reports/stretch
+          destination: deb-package-tests-stretch
+  build_and_test_buster:
+    executor: debian-buster
+    steps:
+      - checkout
+      - run:
+          name: Enable complete set of official Debian repos and install build dependencies
+          command: |
+            cat /etc/apt/sources.list
+            sudo mv -f ./.circleci/buster-sources.list /etc/apt/sources.list
+            sudo apt update && sudo apt -y full-upgrade
+            sudo apt -y install add-apt-key adequate apt-transport-https autopkgtest binutils-multiarch build-essential \
+            check-all-the-things curl debhelper devscripts dh-acc dh-buildinfo dh-exec dh-make dh-metainit dh-migrations \
+            dh-runit dh-translations dirmngr ftp lintian man-db pbuilder piuparts pristine-tar quilt schroot \
+            software-properties-common sudo wget xz-utils
+      - run:
+          name: Build package for Debian Buster
+          command: ./debian/make_deb_package.sh
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/buster/reptyr_0.7.0-1_amd64.deb
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/buster/reptyr-dbgsym_0.7.0-1_amd64.ddeb
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/buster/reptyr_0.7.0-1.dsc
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/buster/reptyr_0.7.0-1_amd64.changes
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/buster/reptyr_0.7.0-1_amd64.buildinfo
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/buster/reptyr_0.7.0-1.debian.tar.xz
+      - run:
+          name: Install built package
+          command: |
+            mkdir -p /home/circleci/deb-test-reports/buster
+            echo -e "Installing package with dpkg...\n" | tee /home/circleci/deb-test-reports/buster/dpkg-install-log-buster.txt
+            sudo dpkg -D20600 --log=/home/circleci/deb-test-reports/buster/dpkg-install-log-buster.txt -Ri /home/circleci
+      - run:
+          name: Test package installation results with adequate
+          command: |
+            echo "Testing package install results with adequate..." | tee /home/circleci/deb-test-reports/buster/adequate-buster.txt
+            adequate reptyr 2>&1 | tee -a /home/circleci/deb-test-reports/buster/adequate-buster.txt
+      - run:
+          name: Test package installation results with piuparts
+          command: >
+            echo "Testing package install results with piuparts..."; find /home/circleci -type f -name '*.deb' |
+            sudo xargs piuparts -D debian -l /home/circleci/deb-test-reports/buster/piuparts-buster.txt
+      - run:
+          name: Test package installation results with check-all-the-things
+          command: |
+            echo "Testing software environment results with check-all-the-things..."
+            find /home/circleci -type f -name '*.deb' | sudo xargs check-all-the-things -a -d debian -r buster 2>&1 | \
+            tee -a /home/circleci/deb-test-reports/buster/check-all-the-things-buster.txt
+      - store_artifacts:
+          path: /home/circleci/deb-test-reports/buster
+          destination: deb-package-tests-buster
+  build_and_test_sid:
+    executor: debian-sid
+    steps:
+      - checkout
+      - run:
+          name: Enable complete set of official Debian repos and install build dependencies
+          command: |
+            cat /etc/apt/sources.list
+            sudo mv -f ./.circleci/sid-sources.list /etc/apt/sources.list
+            sudo apt update && sudo apt -y full-upgrade
+            sudo apt -y install add-apt-key adequate apt-transport-https autopkgtest binutils-multiarch build-essential \
+            check-all-the-things curl debhelper devscripts dh-acc dh-buildinfo dh-exec dh-make dh-metainit dh-migrations \
+            dh-runit dh-translations dirmngr ftp lintian man-db pbuilder piuparts pristine-tar quilt schroot \
+            software-properties-common sudo wget xz-utils
+      - run:
+          name: Build package for Debian Sid
+          command: ./debian/make_deb_package.sh
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/sid/reptyr_0.7.0-1_amd64.deb
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/sid/reptyr-dbgsym_0.7.0-1_amd64.ddeb
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/sid/reptyr_0.7.0-1.dsc
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/sid/reptyr_0.7.0-1_amd64.changes
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/sid/reptyr_0.7.0-1_amd64.buildinfo
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/sid/reptyr_0.7.0-1.debian.tar.xz
+      - run:
+          name: Install built package
+          command: |
+            mkdir -p /home/circleci/deb-test-reports/sid
+            echo -e "Installing package with dpkg...\n" | tee /home/circleci/deb-test-reports/sid/dpkg-install-log-sid.txt
+            sudo dpkg -D20600 --log=/home/circleci/deb-test-reports/sid/dpkg-install-log-sid.txt -Ri /home/circleci
+      - run:
+          name: Test package installation results with adequate
+          command: |
+            echo "Testing package install results with adequate..." | tee /home/circleci/deb-test-reports/sid/adequate-sid.txt
+            adequate reptyr 2>&1 | tee -a /home/circleci/deb-test-reports/sid/adequate-sid.txt
+      - run:
+          name: Test package installation results with piuparts
+          command: >
+            echo "Testing package install results with piuparts..."; find /home/circleci -type f -name '*.deb' |
+            sudo xargs piuparts -D debian -l /home/circleci/deb-test-reports/sid/piuparts-sid.txt
+      - run:
+          name: Test package installation results with check-all-the-things
+          command: |
+            echo "Testing software environment results with check-all-the-things..."
+            find /home/circleci -type f -name '*.deb' | sudo xargs check-all-the-things -a -d debian -r sid 2>&1 | \
+            tee -a /home/circleci/deb-test-reports/sid/check-all-the-things-sid.txt
+      - store_artifacts:
+          path: /home/circleci/deb-test-reports/sid
+          destination: deb-package-tests-sid
+  build_and_test_xenial:
+    executor: ubuntu-xenial
+    steps:
+      - checkout
+      - run:
+          name: Enable complete set of official Ubuntu repos and install build dependencies
+          command: |
+            cat /etc/apt/sources.list
+            sudo mv -f ./.circleci/xenial-sources.list /etc/apt/sources.list
+            sudo apt update && sudo apt -y full-upgrade
+            sudo apt -y install add-apt-key adequate apt-transport-https autopkgtest binutils-multiarch build-essential \
+            check-all-the-things curl debhelper devscripts dh-acc dh-buildinfo dh-exec dh-make dh-metainit dh-migrations \
+            dh-runit dh-translations dirmngr ftp lintian man-db pbuilder piuparts pristine-tar quilt schroot \
+            software-properties-common sudo wget xz-utils
+      - run:
+          name: Build package for Ubuntu Xenial
+          command: ./ubuntu/make_deb_package.sh
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/xenial/reptyr_0.7.0-1_amd64.deb
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/xenial/reptyr-dbgsym_0.7.0-1_amd64.ddeb
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/xenial/reptyr_0.7.0-1.dsc
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/xenial/reptyr_0.7.0-1_amd64.changes
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/xenial/reptyr_0.7.0-1_amd64.buildinfo
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/xenial/reptyr_0.7.0-1.debian.tar.xz
+      - run:
+          name: Install built package
+          command: |
+            mkdir -p /home/circleci/deb-test-reports/xenial
+            echo -e "Installing package with dpkg...\n" | tee /home/circleci/deb-test-reports/xenial/dpkg-install-log-xenial.txt
+            sudo dpkg -D20600 --log=/home/circleci/deb-test-reports/xenial/dpkg-install-log-xenial.txt -Ri /home/circleci
+      - run:
+          name: Test package installation results with adequate
+          command: |
+            echo "Testing package install results with adequate..." | tee /home/circleci/deb-test-reports/xenial/adequate-xenial.txt
+            adequate reptyr 2>&1 | tee -a /home/circleci/deb-test-reports/xenial/adequate-xenial.txt
+      - run:
+          name: Test package installation results with piuparts
+          command: >
+            echo "Testing package install results with piuparts..."; find /home/circleci -type f -name '*.deb' |
+            sudo xargs piuparts -D ubuntu -l /home/circleci/deb-test-reports/xenial/piuparts-xenial.txt
+      - run:
+          name: Test package installation results with check-all-the-things
+          command: |
+            echo "Testing software environment results with check-all-the-things..."
+            find /home/circleci -type f -name '*.deb' | sudo xargs check-all-the-things -a -d ubuntu -r xenial 2>&1 | \
+            tee -a /home/circleci/deb-test-reports/xenial/check-all-the-things-xenial.txt
+      - store_artifacts:
+          path: /home/circleci/deb-test-reports/xenial
+          destination: deb-package-tests-xenial
+  build_and_test_bionic:
+    executor: ubuntu-bionic
+    steps:
+      - checkout
+      - run:
+          name: Enable complete set of official Ubuntu repos and install build dependencies
+          command: |
+            cat /etc/apt/sources.list
+            sudo mv -f ./.circleci/bionic-sources.list /etc/apt/sources.list
+            sudo apt update && sudo apt -y full-upgrade
+            sudo apt -y install add-apt-key adequate apt-transport-https autopkgtest binutils-multiarch build-essential \
+            check-all-the-things curl debhelper devscripts dh-acc dh-buildinfo dh-exec dh-make dh-metainit dh-migrations \
+            dh-runit dh-translations dirmngr ftp lintian man-db pbuilder piuparts pristine-tar quilt schroot \
+            software-properties-common sudo wget xz-utils
+      - run:
+          name: Build package for Ubuntu Bionic
+          command: ./ubuntu/make_deb_package.sh
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/bionic/reptyr_0.7.0-1_amd64.deb
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/bionic/reptyr-dbgsym_0.7.0-1_amd64.ddeb
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/bionic/reptyr_0.7.0-1.dsc
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/bionic/reptyr_0.7.0-1_amd64.changes
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/bionic/reptyr_0.7.0-1_amd64.buildinfo
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/bionic/reptyr_0.7.0-1.debian.tar.xz
+      - run:
+          name: Install built package
+          command: |
+            mkdir -p /home/circleci/deb-test-reports/bionic
+            echo -e "Installing package with dpkg...\n" | tee /home/circleci/deb-test-reports/bionic/dpkg-install-log-bionic.txt
+            sudo dpkg -D20600 --log=/home/circleci/deb-test-reports/bionic/dpkg-install-log-bionic.txt -Ri /home/circleci
+      - run:
+          name: Test package installation results with adequate
+          command: |
+            echo "Testing package install results with adequate..." | tee /home/circleci/deb-test-reports/bionic/adequate-bionic.txt
+            adequate reptyr 2>&1 | tee -a /home/circleci/deb-test-reports/bionic/adequate-bionic.txt
+      - run:
+          name: Test package installation results with piuparts
+          command: >
+            echo "Testing package install results with piuparts..."; find /home/circleci -type f -name '*.deb' |
+            sudo xargs piuparts -D ubuntu -l /home/circleci/deb-test-reports/bionic/piuparts-bionic.txt
+      - run:
+          name: Test package installation results with check-all-the-things
+          command: |
+            echo "Testing software environment results with check-all-the-things..."
+            find /home/circleci -type f -name '*.deb' | sudo xargs check-all-the-things -a -d ubuntu -r bionic 2>&1 | \
+            tee -a /home/circleci/deb-test-reports/bionic/check-all-the-things-bionic.txt
+      - store_artifacts:
+          path: /home/circleci/deb-test-reports/bionic
+          destination: deb-package-tests-bionic
+  build_and_test_disco:
+    executor: ubuntu-disco
+    steps:
+      - checkout
+      - run:
+          name: Enable complete set of official Ubuntu repos and install build dependencies
+          command: |
+            cat /etc/apt/sources.list
+            sudo mv -f ./.circleci/disco-sources.list /etc/apt/sources.list
+            sudo apt update && sudo apt -y full-upgrade
+            sudo apt -y install add-apt-key adequate apt-transport-https autopkgtest binutils-multiarch build-essential \
+            check-all-the-things curl debhelper devscripts dh-acc dh-buildinfo dh-exec dh-make dh-metainit dh-migrations \
+            dh-runit dh-translations dirmngr ftp lintian man-db pbuilder piuparts pristine-tar quilt schroot \
+            software-properties-common sudo wget xz-utils
+      - run:
+          name: Build package for Ubuntu Disco
+          command: ./ubuntu/make_deb_package.sh
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/disco/reptyr_0.7.0-1_amd64.deb
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/disco/reptyr-dbgsym_0.7.0-1_amd64.ddeb
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/disco/reptyr_0.7.0-1.dsc
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/disco/reptyr_0.7.0-1_amd64.changes
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/disco/reptyr_0.7.0-1_amd64.buildinfo
+      - store_artifacts:
+          path: /home/circleci/reptyr/package/disco/reptyr_0.7.0-1.debian.tar.xz
+      - run:
+          name: Install built package
+          command: |
+            mkdir -p /home/circleci/deb-test-reports/disco
+            echo -e "Installing package with dpkg...\n" | tee /home/circleci/deb-test-reports/disco/dpkg-install-log-disco.txt
+            sudo dpkg -D20600 --log=/home/circleci/deb-test-reports/disco/dpkg-install-log-disco.txt -Ri /home/circleci
+      - run:
+          name: Test package installation results with adequate
+          command: |
+            echo "Testing package install results with adequate..." | tee /home/circleci/deb-test-reports/disco/adequate-disco.txt
+            adequate reptyr 2>&1 | tee -a /home/circleci/deb-test-reports/disco/adequate-disco.txt
+      - run:
+          name: Test package installation results with piuparts
+          command: >
+            echo "Testing package install results with piuparts..."; find /home/circleci -type f -name '*.deb' |
+            sudo xargs piuparts -D ubuntu -l /home/circleci/deb-test-reports/disco/piuparts-disco.txt
+      - run:
+          name: Test package installation results with check-all-the-things
+          command: |
+            echo "Testing software environment results with check-all-the-things..."
+            find /home/circleci -type f -name '*.deb' | sudo xargs check-all-the-things -a -d ubuntu -r disco 2>&1 | \
+            tee -a /home/circleci/deb-test-reports/disco/check-all-the-things-disco.txt
+      - store_artifacts:
+          path: /home/circleci/deb-test-reports/disco
+          destination: deb-package-tests-disco
+workflows:
+  version: 2
+  reptyr-build-packages-and-test:
+    jobs:
+      - scripts_test_and_store:
+          filters:
+            branches:
+              only: debian
+      - build_and_test_stretch:
+          filters:
+            branches:
+              only: debian
+      - build_and_test_buster:
+          filters:
+            branches:
+              only: debian
+      - build_and_test_sid:
+          filters:
+            branches:
+              only: debian
+      - build_and_test_xenial:
+          filters:
+            branches:
+              only: debian
+      - build_and_test_bionic:
+          filters:
+            branches:
+              only: debian
+      - build_and_test_disco:
+          filters:
+            branches:
+              only: debian
+...
