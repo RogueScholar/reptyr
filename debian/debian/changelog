@@ -1,0 +1,46 @@
+reptyr (0.7.0-1) unstable; urgency=low
+
+  * Add bash completion support
+  * Fix compilation with musl libc, CentOS, or GCC 7+
+  * Support for PowerPC and aarch64
+
+ -- Peter J. Mello <admin@petermello.net>  Mon, 13 May 2019 22:25:07 -0700
+
+reptyr (0.6.2-1) unstable; urgency=low
+
+  * Fix tty-stealing on i386
+  * New release:
+    - Fixup build for tests by adding Python dependencies and disabling
+      tests when Yama would not allow them to run
+  * Bump standards version to 3.9.6 (no changes).
+
+ -- Evan Broder <evan@ebroder.net>  Sun, 08 Feb 2015 14:13:04 -1000
+
+reptyr (0.5-1) unstable; urgency=low
+
+  * Add an early check and error if attaching a process with children.
+  * New release (Closes: #711020):
+    - Drop debian/patches/accept-cmd-line-build-flags.patch which was
+      accepted upstream
+    - Update debian/reptyr.docs
+  * Update debian/README.source to be more clear about willingness to
+    support NMUs
+  * Update to standards version 3.9.4:
+    - Update debian/copyright to the release 1.0 copyright-format spec
+    - Update Vcs-Git to match new policy
+
+ -- Evan Broder <evan@ebroder.net>  Wed, 05 Jun 2013 16:20:50 -0700
+
+reptyr (0.3-2) unstable; urgency=low
+
+  * Bump standards version to 3.9.2 (no changes).
+  * Build for armhf (Closes: #633750)
+  * Enable support for buildflags
+
+ -- Evan Broder <evan@ebroder.net>  Mon, 31 Oct 2011 12:05:33 -0400
+
+reptyr (0.3-1) unstable; urgency=low
+
+  * Initial release (Closes: #613123)
+
+ -- Evan Broder <evan@ebroder.net>  Sun, 10 Jul 2011 08:28:45 -0700

@@ -16,17 +16,17 @@ fi
  - ${changelog-(add changelog here)}
 
 EOF
-    cat ChangeLog
-} > ChangeLog.tmp
-mv -f ChangeLog.tmp ChangeLog
+    cat CHANGELOG
+} > CHANGELOG.tmp
+mv -f CHANGELOG.tmp CHANGELOG
 
 if ! [ "$changelog" ]; then
-    "$EDITOR" ChangeLog
+    "$EDITOR" CHANGELOG
 fi
 
 version="$version" perl -i -lape '/^#define REPTYR_VERSION/ && s/".*"/"$ENV{version}"/' reptyr.h
 
-git add ChangeLog reptyr.h
+git add CHANGELOG reptyr.h
 
-git commit -m "reptyr $version"
+git commit -m "New reptyr release, version $version"
 git tag "reptyr-$version" -m "reptyr $version" -s

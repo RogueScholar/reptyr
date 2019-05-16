@@ -1,0 +1,19 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE = 1
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+%:
+		dh $@
+
+override_dh_auto_build:
+		dh_auto_build -- $(shell dpkg-buildflags --export=configure)
+
+override_dh_auto_clean:
+		$(MAKE) clean
+
+override_dh_auto_test:
+		if ! [ -f /proc/sys/kernel/yama/ptrace_scope ] || \
+			[ "$$(cat /proc/sys/kernel/yama/ptrace_scope)" = 0 ]; then \
+			dh_auto_test; \
+		fi

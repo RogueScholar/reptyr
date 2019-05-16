@@ -1,3 +1,5 @@
+/*  SPDX-License-Identifier: MIT  */
+
 #ifndef __reallocarray_h
 #define __reallocarray_h
 

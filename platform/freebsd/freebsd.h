@@ -1,3 +1,4 @@
+/*  SPDX-License-Identifier: MIT  */
 /*
  * Copyright (C) 2014 Christian Heckendorf <heckendorfc@gmail.com>
  *

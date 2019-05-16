@@ -1,0 +1,46 @@
+reptyr for Debian
+-----------------
+
+My packages are listed on http://wiki.debian.org/LowThresholdNmu with
+the intent that other uploaders should feel comfortable fixing bugs
+(including updating to a new release).
+
+I'm always happy to have extra help with my packages, but it would be
+especially appreciated if you could also make the corresponding
+changes to the git repository so I can more easily keep those in sync.
+
+The Debian packaging for reptyr is maintained in the debian branch of
+the upstream reptyr git repository, at git://github.com/nelhage/reptyr.
+
+I use pristine-tar to ensure that we can consistently generate the
+same orig tarball for a given Debian release of reptyr. When creating
+a new Debian release, use
+
+    pristine-tar commit PATH_TO_TARBALL COMMIT-ISH
+
+to associate a particular tarball with a particular commit on the
+master branch.
+
+When using a git snapshot for a Debian release, use the
+github-generated download of the revision being snapshotted as the
+orig tarball. This tarball can be fetched from the URL:
+
+    https://github.com/nelhage/reptyr/tarball/COMMIT
+
+and should be renamed to match the expected form of an upstream
+tarball name (i.e. reptyr_VERSION.orig.tar.gz) before importing it
+into pristine-tar.
+
+Once a new tarball has been imported, you can merge the tag into the
+debian branch
+
+    git checkout debian
+    git merge COMMIT-ISH
+
+And generate a new changelog entry
+
+Finally, you can build the package using git-buildpackage
+
+    git build-package -S
+
+ -- Evan Broder <evan@ebroder.net>, Wed,  5 Jun 2013 16:12:29 -0700

@@ -1,3 +1,5 @@
+/*  SPDX-License-Identifier: MIT  */
+
 #define SC(name) .nr_##name = __NR_##name
 
 {
