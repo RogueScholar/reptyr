@@ -1,0 +1,24 @@
+Source: reptyr
+Maintainer: Peter J. Mello <admin@petermello.net>
+Section: misc
+Priority: optional
+Build-Depends: debhelper-compat (= 11), dpkg-dev (>= 1.16.1), python,
+  python-pexpect
+Standards-Version: 4.3.0
+Homepage: https://github.com/nelhage/reptyr
+Vcs-Browser: https://github.com/nelhage/reptyr/tree/debian
+Vcs-Git: https://github.com/nelhage/reptyr.git -b debian
+
+Package: reptyr
+Architecture: i386 amd64 armel armhf arm64 powerpc
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Tool for moving running programs between ptys
+ reptyr is a utility for taking an existing running program and
+ attaching it to a new terminal, and is particularly useful for moving
+ a long-running process into a GNU screen session.
+ .
+ reptyr does a more thorough job of transferring programs than many
+ other tools, including the popular "screenify" shell script, because
+ it changes the program's controlling terminal. This means that
+ actions such as window resizes and interrupts are sent to the process
+ from the new terminal.

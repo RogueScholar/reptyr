@@ -1,3 +1,4 @@
+/*  SPDX-License-Identifier: MIT  */
 /*  $OpenBSD: reallocarray.c,v 1.1 2014/05/08 21:43:49 deraadt Exp $    */
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>

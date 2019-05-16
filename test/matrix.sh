@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# SPDX-License-Identifier: MIT
+
 echo "64-bit..."
 make clean
 make CFLAGS=-m64 LDFLAGS=-m64 test
