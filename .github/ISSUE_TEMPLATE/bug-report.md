@@ -1,10 +1,9 @@
 ---
-name: BUG REPORT
+name: Bug Report
 about: Create a report to help us improve
-title: "[ISSUE]"
+title: "[ISSUE] "
 labels: ''
 assignees: ''
-
 ---
 
 - [ ] I have read the [relevant section](CONTRIBUTING.md#Reporting Bugs) of the Contributing Guidelines
