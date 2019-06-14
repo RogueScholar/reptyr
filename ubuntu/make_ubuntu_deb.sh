@@ -130,8 +130,8 @@ cd "${PACKAGE_DIR}"/"${PACKAGE_NAME}"-"${PACKAGE_VER}" || exit 1
 # Create and install a dummy package to satisfy the build dependencies, then delete it
 mk-build-deps -ir debian/control
 
-# Replace the pseudo-release codename string "unstable" with the distribution codename of the build system
-sed -i "1s/unstable/$(lsb_release -cs)/" debian/changelog
+# Replace the LTS distribution string "bionic" with the distribution codename of the build system
+sed -i "1s/bionic/$(lsb_release -cs)/" debian/changelog
 
 # Call debuild to oversee the build process and produce an output string for the user based on its exit code
 ## (A separate invocation style is triggered if the script is run by a CircleCI executor for development testing)
