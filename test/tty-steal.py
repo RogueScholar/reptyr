@@ -23,7 +23,7 @@ except ImportError:
     pass
 
 if not did_prctl:
-  print("Unable to find `prctl.set_ptracer`, skipping `PR_SET_PTRACER`.")
+    print("Unable to find `prctl.set_ptracer`, skipping `PR_SET_PTRACER`.")
 
 child = pexpect.spawn("test/victim")
 child.setecho(False)
@@ -31,7 +31,8 @@ child.sendline("hello")
 child.expect("ECHO: hello")
 
 reptyr = pexpect.spawn("./reptyr -V -T %d" % (child.pid,))
-print("spawned children: me={} victim={} reptyr={}".format(os.getpid(), child.pid, reptyr.pid))
+print("spawned children: me={} victim={} reptyr={}".format(
+    os.getpid(), child.pid, reptyr.pid))
 reptyr.logfile = logfile
 
 reptyr.sendline("world")
