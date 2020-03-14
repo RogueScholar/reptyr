@@ -80,7 +80,7 @@ struct ptrace_child {
     struct user_regs_struct regs;
 #endif
 #elif defined(__FreeBSD__)
-	struct reg regs;
+    struct reg regs;
 #endif
 };
 
