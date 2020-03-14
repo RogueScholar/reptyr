@@ -1,7 +1,7 @@
-import pexpect
 import os
 import sys
 
+import pexpect
 from util import expect_eof
 
 if os.getenv("NO_TEST_STEAL") is not None:

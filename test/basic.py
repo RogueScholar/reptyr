@@ -1,7 +1,7 @@
 import os
-import pexpect
 import sys
 
+import pexpect
 from util import expect_eof
 
 if os.getenv("NO_TEST_BASIC") is not None:
