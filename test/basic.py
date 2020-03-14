@@ -18,7 +18,7 @@ child.setecho(False)
 child.sendline("hello")
 child.expect("ECHO: hello")
 
-reptyr = pexpect.spawn("./reptyr -V %d" % (child.pid,))
+reptyr = pexpect.spawn("./reptyr -V %d" % (child.pid, ))
 reptyr.logfile = logfile
 reptyr.sendline("world")
 reptyr.expect("ECHO: world")
