@@ -1,15 +1,14 @@
 script: make test
-sudo: required
 language: python
 python:
-  - "2.7"
+  - "3.7"
 install:
-  - env -u CFLAGS -u LDFLAGS pip install -r test/requirements.txt
+  - pip install -r test/requirements.txt
+arch:
+  - arm64
 addons:
   apt:
     packages:
-      - gcc-multilib
       - libcap-dev
 env:
-  - CFLAGS=-m32 LDFLAGS=-m32 DISABLE_TESTS=1
-  - CFLAGS=-m64 LDFLAGS=-m64
+  - PYTHON_CMD=python3
