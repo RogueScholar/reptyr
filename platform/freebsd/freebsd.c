@@ -156,7 +156,7 @@ int fill_proc_stat(struct steal_pty_state *steal, struct kinfo_proc *kp) {
     struct proc_stat *ps = &steal->target_stat;
 
     if (strlcpy(ps->comm, kp->ki_comm, sizeof(ps->comm)) >= sizeof(ps->comm))
-      return ENOMEM;
+        return ENOMEM;
     ps->pid = kp->ki_pid;
     ps->ppid = kp->ki_ppid;
     ps->sid = kp->ki_sid;
