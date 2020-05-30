@@ -38,6 +38,7 @@ int check_pgroup(pid_t target) {
   pg = getpgid(target);
 
   procstat = procstat_open_sysctl();
+  cnt = 0;
   kp = procstat_getprocs(procstat, KERN_PROC_PGRP, pg, &cnt);
   procstat_freeprocs(procstat, kp);
   procstat_close(procstat);
@@ -59,6 +60,7 @@ int check_proc_stopped(pid_t pid, int fd) {
   unsigned int cnt;
 
   procstat = procstat_open_sysctl();
+  cnt = 0;
   kp = procstat_getprocs(procstat, KERN_PROC_PID, pid, &cnt);
 
   if (cnt > 0)
@@ -81,6 +83,7 @@ struct filestat_list *get_procfiles(pid_t pid, struct kinfo_proc **kp,
                                     unsigned int *cnt) {
   int mflg = 0; // include mmapped files
   (*procstat) = procstat_open_sysctl();
+  *cnt = 0;
   (*kp) = procstat_getprocs(*procstat, KERN_PROC_PID, pid, cnt);
   if ((*kp) == NULL || *cnt < 1)
     return NULL;
@@ -139,6 +142,7 @@ int find_terminal_emulator(struct steal_pty_state *steal) {
   unsigned int cnt;
 
   procstat = procstat_open_sysctl();
+  cnt = 0;
   kp = procstat_getprocs(procstat, KERN_PROC_PID, steal->target_stat.sid, &cnt);
 
   if (kp && cnt > 0)
@@ -147,7 +151,7 @@ int find_terminal_emulator(struct steal_pty_state *steal) {
   procstat_freeprocs(procstat, kp);
   procstat_close(procstat);
 
-  return 0;
+  return (cnt != 0 ? 0 : 1);
 }
 
 int fill_proc_stat(struct steal_pty_state *steal, struct kinfo_proc *kp) {
@@ -170,6 +174,7 @@ int grab_uid(pid_t pid, uid_t *out) {
   unsigned int cnt;
 
   procstat = procstat_open_sysctl();
+  cnt = 0;
   kp = procstat_getprocs(procstat, KERN_PROC_PID, pid, &cnt);
 
   if (kp && cnt > 0)
@@ -189,6 +194,7 @@ int get_terminal_state(struct steal_pty_state *steal, pid_t target) {
   int err = 0;
 
   procstat = procstat_open_sysctl();
+  cnt = 0;
   kp = procstat_getprocs(procstat, KERN_PROC_PID, target, &cnt);
   if (kp == NULL || cnt < 1)
     goto done;
@@ -300,6 +306,7 @@ void move_process_group(struct ptrace_child *child, pid_t from, pid_t to) {
   int err;
 
   procstat = procstat_open_sysctl();
+  cnt = 0;
   kp = procstat_getprocs(procstat, KERN_PROC_PGRP, from, &cnt);
 
   for (i = 0; i < cnt; i++) {
