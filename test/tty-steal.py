@@ -1,7 +1,7 @@
-import pexpect
 import os
 import sys
 
+import pexpect
 from util import expect_eof
 
 if os.getenv("NO_TEST_STEAL") is not None:
@@ -15,23 +15,25 @@ if sys.version_info[0] >= 3:
 did_prctl = False
 try:
     import prctl
-    PR_SET_PTRACER_ANY = 0xffffffff
-    if hasattr(prctl, 'set_ptracer'):
+
+    PR_SET_PTRACER_ANY = 0xFFFFFFFF
+    if hasattr(prctl, "set_ptracer"):
         did_prctl = True
         prctl.set_ptracer(PR_SET_PTRACER_ANY)
 except ImportError:
     pass
 
 if not did_prctl:
-  print("Unable to find `prctl.set_ptracer`, skipping `PR_SET_PTRACER`.")
+    print("Unable to find `prctl.set_ptracer`, skipping `PR_SET_PTRACER`.")
 
 child = pexpect.spawn("test/victim")
 child.setecho(False)
 child.sendline("hello")
 child.expect("ECHO: hello")
 
-reptyr = pexpect.spawn("./reptyr -V -T %d" % (child.pid,))
-print("spawned children: me={} victim={} reptyr={}".format(os.getpid(), child.pid, reptyr.pid))
+reptyr = pexpect.spawn("./reptyr -V -T %d" % (child.pid, ))
+print("spawned children: me={} victim={} reptyr={}".format(
+    os.getpid(), child.pid, reptyr.pid))
 reptyr.logfile = logfile
 
 reptyr.sendline("world")

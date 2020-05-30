@@ -1,7 +1,7 @@
 import os
-import pexpect
 import sys
 
+import pexpect
 from util import expect_eof
 
 if os.getenv("NO_TEST_BASIC") is not None:
@@ -18,7 +18,7 @@ child.setecho(False)
 child.sendline("hello")
 child.expect("ECHO: hello")
 
-reptyr = pexpect.spawn("./reptyr -V %d" % (child.pid,))
+reptyr = pexpect.spawn("./reptyr -V %d" % (child.pid, ))
 reptyr.logfile = logfile
 reptyr.sendline("world")
 reptyr.expect("ECHO: world")
