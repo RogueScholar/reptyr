@@ -1,0 +1,67 @@
+Description: Change the install prefix
+ Upstream has a peculiar way of writing the install directive in the Makefile.
+ I changed it to allow the package build to work properly, which included
+ changing the prefix from /usr/local to /usr.
+Author: Peter J. Mello <admin@petermello.net>
+Origin: vendor
+Forwarded: no
+Last-Update: 2020-07-01
+
+--- a/Makefile
++++ b/Makefile
+@@ -3,8 +3,9 @@
+ # SPDX-License-Identifier: MIT
+ 
+ override CFLAGS := -MD -Wall -Werror -D_GNU_SOURCE -g $(CFLAGS)
++SHELL = /bin/bash
+ OBJS=reptyr.o reallocarray.o attach.o
+-DEPS=$(wildcard *.d platform/*/*.d)
++DEPS = $(wildcard *.d platform/*/*.d test/*.d)
+ UNAME_S := $(shell uname -s)
+ ifeq ($(UNAME_S),Linux)
+ 	OBJS += platform/linux/linux_ptrace.o platform/linux/linux.o
+@@ -13,11 +14,8 @@ ifeq ($(UNAME_S),FreeBSD)
+ 	OBJS += platform/freebsd/freebsd_ptrace.o platform/freebsd/freebsd.o
+ 	LDFLAGS += -lprocstat
+ endif
+-# Note that because of how Make works, this can be overridden from the
+-# command-line.
+-#
+-# e.g. install to /usr with `make PREFIX=/usr`
+-PREFIX=/usr/local
++
++PREFIX ?= /usr
+ BINDIR=$(PREFIX)/bin
+ MANDIR=$(PREFIX)/share/man
+
+@@ -43,21 +41,19 @@ test/victim: override CFLAGS
+ test/victim: override LDFLAGS := $(VICTIM_LDFLAGS)
+ 
+ clean:
+-	rm -f reptyr $(OBJS) test/victim.o test/victim $(DEPS)
++	rm -f reptyr test/victim{,.o} $(OBJS) $(DEPS)
++	rm -rf tests/__pycache__
+ 
+ BASHCOMPDIR ?= $(shell $(PKG_CONFIG) --variable=completionsdir bash-completion 2>/dev/null)
+ 
+ install: reptyr
+-	install -d -m 755 $(DESTDIR)$(BINDIR)
+-	install -m 755 reptyr $(DESTDIR)$(BINDIR)/reptyr
+-	install -d -m 755 $(DESTDIR)$(MANDIR)/man1
+-	install -m 644 reptyr.1 $(DESTDIR)$(MANDIR)/man1/reptyr.1
+-	install -d -m 755 $(DESTDIR)$(MANDIR)/fr/man1
+-	install -m 644 reptyr.fr.1 $(DESTDIR)$(MANDIR)/fr/man1/reptyr.1
++	install -Dm 0755 -t $(DESTDIR)$(BINDIR) reptyr
++	install -Dm 0644 -t $(DESTDIR)$(MANDIR)/man1 reptyr.1
++	install -DTm 0644 reptyr.fr.1 $(DESTDIR)$(MANDIR)/fr/man1/reptyr.1
+-	bashcompdir=$(BASHCOMPDIR) ; \
+-	test -z "$$bashcompdir" && bashcompdir=/etc/bash_completion.d ; \
+-	install -d -m 755 $(DESTDIR)$$bashcompdir ; \
+-	install -m 644 reptyr.bash $(DESTDIR)$$bashcompdir/reptyr
++ifeq ("","$(BASHCOMPDIR)")
++	BASHCOMPDIR=$(PREFIX)/share/bash-completion/completions
++endif
++	install -DTm 0644 reptyr.bash $(DESTDIR)$(BASHCOMPDIR)/reptyr
+ 
+ .PHONY: PHONY
+ 

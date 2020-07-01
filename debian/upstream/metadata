@@ -1,0 +1,11 @@
+---
+Bug:
+  Database: "https://github.com/nelhage/reptyr/issues"
+  Submit: "https://github.com/nelhage/reptyr/issues/new/choose"
+Changelog: "https://github.com/nelhage/reptyr/blob/master/ChangeLog"
+Documentation: "https://github.com/nelhage/reptyr/blob/master/README.md"
+Registration: "https://github.com/join"
+Repository: "https://github.com/nelhage/reptyr.git"
+Repository-Browse: "https://github.com/nelhage/reptyr"
+Security-Contact: "Nelson Elhage <nelhage@nelhage.com"
+...

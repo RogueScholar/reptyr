@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2011 by Nelson Elhage
+/* Copyright (C) 2011 by Nelson Elhage
+ * SPDX-License-Identifier: MIT
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,7 @@ static struct ptrace_personality arch_personality[2] = {
         offsetof(struct reg, r_rsi),
         offsetof(struct reg, r_rdx),
         offsetof(struct reg, r_rcx),
-        //offsetof(struct reg, r_r10),
+        // offsetof(struct reg, r_r10),
         offsetof(struct reg, r_r8),
         offsetof(struct reg, r_r9),
         offsetof(struct reg, r_rip),
@@ -59,13 +59,12 @@ struct x86_personality x86_personality[2] = {
 
 struct syscall_numbers arch_syscall_numbers[2] = {
 #include "default-syscalls.h"
-#include "default-syscalls.h"
 };
 
-int arch_get_personality(struct ptrace_child *child) {
+int arch_get_personality(struct ptrace_child * child) {
     unsigned long cs;
 
-    cs = arch_get_register(child,offsetof(struct reg, r_cs));
+    cs = arch_get_register(child, offsetof(struct reg, r_cs));
     if (child->error)
         return -1;
     if (cs == 0x23)

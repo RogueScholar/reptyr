@@ -1,0 +1,4 @@
+# False positive: lintian doesn't recognize YAML nested scalars
+reptyr source: upstream-metadata-missing-bug-tracking
+# Upstream tagged release tarballs are not cryptographically signed
+reptyr source: debian-watch-does-not-check-gpg-signature

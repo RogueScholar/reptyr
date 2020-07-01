@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2011 by Nelson Elhage
+/* Copyright (C) 2011 by Nelson Elhage
+ * SPDX-License-Identifier: MIT
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,64 +25,64 @@
 
 #ifdef __linux__
 
-// Important that we include <sys/wait.h> before <linux/*>, for
-// compatibility with certain older libcs, in which <linux/wait.h>
-// #define's some symbols that <sys/wait.h> defines via
-// `enum. c.f. https://bugs.launchpad.net/ubuntu/+source/eglibc/+bug/1261872/
-// and https://github.com/nelhage/reptyr/issues/67
-#include <sys/wait.h>
+    // Important that we include <sys/wait.h> before <linux/*>, for
+    // compatibility with certain older libcs, in which <linux/wait.h>
+    // #define's some symbols that <sys/wait.h> defines via
+    // `enum. c.f.
+    // https://bugs.launchpad.net/ubuntu/+source/eglibc/+bug/1261872/ and
+    // https://github.com/nelhage/reptyr/issues/67
+    #include <sys/wait.h>
 
-#include <linux/major.h>
-#include <linux/net.h>
-#include <linux/limits.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <sys/ptrace.h>
-#include <asm/ptrace.h>
-#include <sys/types.h>
-#include <sys/sysmacros.h>
-#include <sys/user.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/syscall.h>
-#include <sys/mman.h>
-#include <assert.h>
-#include <stddef.h>
-#include <termios.h>
-#include <fcntl.h>
-#include <dirent.h>
-#include <sys/ioctl.h>
-#include <sys/stat.h>
+    #include <linux/limits.h>
+    #include <linux/major.h>
+    #include <linux/net.h>
+    #include <sys/ioctl.h>
+    #include <sys/mman.h>
+    #include <sys/ptrace.h>
+    #include <asm/ptrace.h>
+    #include <sys/socket.h>
+    #include <sys/stat.h>
+    #include <sys/syscall.h>
+    #include <sys/sysmacros.h>
+    #include <sys/types.h>
+    #include <sys/un.h>
+    #include <sys/user.h>
+    #include <assert.h>
+    #include <dirent.h>
+    #include <errno.h>
+    #include <fcntl.h>
+    #include <stddef.h>
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
+    #include <termios.h>
+    #include <unistd.h>
 
 struct ptrace_child;
 unsigned long ptrace_socketcall(struct ptrace_child *child,
-                                unsigned long scratch,
-                                unsigned long socketcall,
+                                unsigned long scratch, unsigned long socketcall,
                                 unsigned long p0, unsigned long p1,
                                 unsigned long p2, unsigned long p3,
                                 unsigned long p4);
 
+    #define socketcall_socket  SYS_SOCKET
+    #define socketcall_connect SYS_CONNECT
+    #define socketcall_sendmsg SYS_SENDMSG
 
-#define socketcall_socket SYS_SOCKET
-#define socketcall_connect SYS_CONNECT
-#define socketcall_sendmsg SYS_SENDMSG
-
-// Define lowercased versions of the socketcall numbers, so that we
-// can assemble them with ## in the macro below
-#define do_socketcall(child, scratch, name, a0, a1, a2, a3, a4)          \
-    ({                                                                  \
-        int __ret;                                                      \
-        if (ptrace_syscall_numbers((child))->nr_##name) {               \
-            __ret = do_syscall((child), name, a0, a1, a2, a3, a4, 0);   \
-        } else {                                                        \
-            __ret = ptrace_socketcall((child), (scratch),               \
-                                      socketcall_##name,                \
-                                      a0, a1, a2, a3, a4);              \
-        }                                                               \
-        __ret; })
+    // Define lowercased versions of the socketcall numbers, so that we
+    // can assemble them with ## in the macro below
+    #define do_socketcall(child, scratch, name, a0, a1, a2, a3, a4)       \
+        ({                                                                \
+            int __ret;                                                    \
+            if (ptrace_syscall_numbers((child))->nr_##name) {             \
+                __ret = do_syscall((child), name, a0, a1, a2, a3, a4, 0); \
+            } else {                                                      \
+                __ret = ptrace_socketcall((child), (scratch),             \
+                                          socketcall_##name,              \
+                                          a0, a1, a2, a3, a4);            \
+            }                                                             \
+            __ret;                                                        \
+        })
 
 #endif
 #endif

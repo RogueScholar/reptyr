@@ -1,0 +1,12 @@
+#!/bin/sh -ex
+
+PTRACE="$(cat /proc/sys/kernel/yama/ptrace_scope)"
+PY3AVAILABLE="$(py3versions -s)"
+
+if [ "${PTRACE}" -eq "0" ]; then
+  for pyver in ${PY3AVAILABLE}; do
+    PYTHON_CMD="${pyver}" $(MAKE) -C $(CURDIR) test/victim
+    "${pyver}" $(CURDIR)/test/basic.py
+    "${pyver}" $(CURDIR)/test/tty-steal.py
+  done
+fi

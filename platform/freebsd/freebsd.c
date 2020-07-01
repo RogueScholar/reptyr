@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2014 Christian Heckendorf <heckendorfc@gmail.com>
+/* Copyright (C) 2014 Christian Heckendorf <heckendorfc@gmail.com>
+ * SPDX-License-Identifier: MIT
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,45 +22,49 @@
 
 #ifdef __FreeBSD__
 
-#include "freebsd.h"
-#include "../platform.h"
-#include "../../reptyr.h"
-#include "../../ptrace.h"
+    #include "freebsd.h"
 
-void check_ptrace_scope(void) {
-}
+    #include "../../ptrace.h"
+    #include "../../reptyr.h"
+    #include "../platform.h"
+
+void check_ptrace_scope(void) {}
 
 int check_pgroup(pid_t target) {
-    struct procstat *procstat;
-    struct kinfo_proc *kp;
+    struct procstat * procstat;
+    struct kinfo_proc * kp;
     pid_t pg;
     unsigned int cnt;
 
     pg = getpgid(target);
 
     procstat = procstat_open_sysctl();
-    cnt = 0;
-    kp = procstat_getprocs(procstat, KERN_PROC_PGRP, pg, &cnt);
+    cnt      = 0;
+    kp       = procstat_getprocs(procstat, KERN_PROC_PGRP, pg, &cnt);
     procstat_freeprocs(procstat, kp);
     procstat_close(procstat);
 
-    if (cnt > 1) {
-        error("Process %d shares a process group with %d other processes. Unable to attach.\n", target, cnt - 1);
-        return EINVAL;
+        if (cnt > 1) {
+            error(
+                "Process %d shares a process group with %d other processes. Unable "
+                "to attach.\n",
+                target,
+                cnt - 1);
+            return EINVAL;
     }
 
     return 0;
 }
 
 int check_proc_stopped(pid_t pid, int fd) {
-    struct procstat *procstat;
-    struct kinfo_proc *kp;
+    struct procstat * procstat;
+    struct kinfo_proc * kp;
     int state = 0;
     unsigned int cnt;
 
     procstat = procstat_open_sysctl();
-    cnt = 0;
-    kp = procstat_getprocs(procstat, KERN_PROC_PID, pid, &cnt);
+    cnt      = 0;
+    kp       = procstat_getprocs(procstat, KERN_PROC_PID, pid, &cnt);
 
     if (cnt > 0)
         state = kp->ki_stat;
@@ -71,29 +75,30 @@ int check_proc_stopped(pid_t pid, int fd) {
     if (cnt < 1)
         return 1;
 
-
     if (state == SSTOP)
         return 1;
 
     return 0;
 }
 
-struct filestat_list* get_procfiles(pid_t pid, struct kinfo_proc **kp, struct procstat **procstat, unsigned int *cnt) {
-    int mflg = 0; // include mmapped files
+struct filestat_list * get_procfiles(pid_t pid, struct kinfo_proc ** kp,
+                                     struct procstat ** procstat,
+                                     unsigned int * cnt) {
+    int mflg    = 0;  // include mmapped files
     (*procstat) = procstat_open_sysctl();
-    *cnt = 0;
-    (*kp) = procstat_getprocs(*procstat, KERN_PROC_PID, pid, cnt);
+    *cnt        = 0;
+    (*kp)       = procstat_getprocs(*procstat, KERN_PROC_PID, pid, cnt);
     if ((*kp) == NULL || *cnt < 1)
         return NULL;
 
     return procstat_getfiles(*procstat, *kp, mflg);
 }
 
-int *get_child_tty_fds(struct ptrace_child *child, int statfd, int *count) {
-    struct filestat *fst;
-    struct filestat_list *head;
-    struct procstat *procstat;
-    struct kinfo_proc *kp;
+int * get_child_tty_fds(struct ptrace_child * child, int statfd, int * count) {
+    struct filestat * fst;
+    struct filestat_list * head;
+    struct procstat * procstat;
+    struct kinfo_proc * kp;
     unsigned int cnt;
     struct fd_array fds = {};
     struct vnstat vn;
@@ -103,19 +108,20 @@ int *get_child_tty_fds(struct ptrace_child *child, int statfd, int *count) {
     head = get_procfiles(child->pid, &kp, &procstat, &cnt);
 
     STAILQ_FOREACH(fst, head, next) {
-        if (fst->fs_type == PS_FST_TYPE_VNODE) {
-            er = procstat_get_vnode_info(procstat, fst, &vn, errbuf);
-            if (er != 0) {
-                error("%s", errbuf);
-                goto out;
-            }
-
-            if (vn.vn_dev == kp->ki_tdev && fst->fs_fd >= 0) {
-                if (fd_array_push(&fds, fst->fs_fd) != 0) {
-                    error("Unable to allocate memory for fd array.");
-                    goto out;
+            if (fst->fs_type == PS_FST_TYPE_VNODE) {
+                er = procstat_get_vnode_info(procstat, fst, &vn, errbuf);
+                    if (er != 0) {
+                        error("%s", errbuf);
+                        goto out;
                 }
-            }
+
+                    if (vn.vn_dev == kp->ki_tdev && fst->fs_fd >= 0) {
+                            if (fd_array_push(&fds, fst->fs_fd) != 0) {
+                                error(
+                                    "Unable to allocate memory for fd array.");
+                                goto out;
+                        }
+                }
         }
     }
 
@@ -134,14 +140,15 @@ out:
 // leader. This is true in most cases, although in principle you can
 // construct situations where it is false. We should fail safe later
 // on if this turns out to be wrong, however.
-int find_terminal_emulator(struct steal_pty_state *steal) {
-    struct procstat *procstat;
-    struct kinfo_proc *kp;
+int find_terminal_emulator(struct steal_pty_state * steal) {
+    struct procstat * procstat;
+    struct kinfo_proc * kp;
     unsigned int cnt;
 
     procstat = procstat_open_sysctl();
-    cnt = 0;
-    kp = procstat_getprocs(procstat, KERN_PROC_PID, steal->target_stat.sid, &cnt);
+    cnt      = 0;
+    kp       = procstat_getprocs(
+        procstat, KERN_PROC_PID, steal->target_stat.sid, &cnt);
 
     if (kp && cnt > 0)
         steal->emulator_pid = kp->ki_ppid;
@@ -152,28 +159,28 @@ int find_terminal_emulator(struct steal_pty_state *steal) {
     return (cnt != 0 ? 0 : 1);
 }
 
-int fill_proc_stat(struct steal_pty_state *steal, struct kinfo_proc *kp) {
-    struct proc_stat *ps = &steal->target_stat;
+int fill_proc_stat(struct steal_pty_state * steal, struct kinfo_proc * kp) {
+    struct proc_stat * ps = &steal->target_stat;
 
     if (strlcpy(ps->comm, kp->ki_comm, sizeof(ps->comm)) >= sizeof(ps->comm))
-      return ENOMEM;
-    ps->pid = kp->ki_pid;
+        return ENOMEM;
+    ps->pid  = kp->ki_pid;
     ps->ppid = kp->ki_ppid;
-    ps->sid = kp->ki_sid;
+    ps->sid  = kp->ki_sid;
     ps->pgid = kp->ki_pgid;
     ps->ctty = kp->ki_tdev;
 
     return 0;
 }
 
-int grab_uid(pid_t pid, uid_t *out) {
-    struct procstat *procstat;
-    struct kinfo_proc *kp;
+int grab_uid(pid_t pid, uid_t * out) {
+    struct procstat * procstat;
+    struct kinfo_proc * kp;
     unsigned int cnt;
 
     procstat = procstat_open_sysctl();
-    cnt = 0;
-    kp = procstat_getprocs(procstat, KERN_PROC_PID, pid, &cnt);
+    cnt      = 0;
+    kp       = procstat_getprocs(procstat, KERN_PROC_PID, pid, &cnt);
 
     if (kp && cnt > 0)
         *out = kp->ki_uid;
@@ -185,22 +192,23 @@ int grab_uid(pid_t pid, uid_t *out) {
     return 0;
 }
 
-int get_terminal_state(struct steal_pty_state *steal, pid_t target) {
-    struct procstat *procstat;
-    struct kinfo_proc *kp;
+int get_terminal_state(struct steal_pty_state * steal, pid_t target) {
+    struct procstat * procstat;
+    struct kinfo_proc * kp;
     unsigned int cnt;
     int err = 0;
 
     procstat = procstat_open_sysctl();
-    cnt = 0;
-    kp = procstat_getprocs(procstat, KERN_PROC_PID, target, &cnt);
+    cnt      = 0;
+    kp       = procstat_getprocs(procstat, KERN_PROC_PID, target, &cnt);
     if (kp == NULL || cnt < 1)
         goto done;
 
-    if (kp->ki_tdev == NODEV) {
-        error("Child is not connected to a pseudo-TTY. Unable to steal TTY.");
-        err = EINVAL;
-        goto done;
+        if (kp->ki_tdev == NODEV) {
+            error(
+                "Child is not connected to a pseudo-TTY. Unable to steal TTY.");
+            err = EINVAL;
+            goto done;
     }
 
     if ((err = fill_proc_stat(steal, kp)))
@@ -217,12 +225,12 @@ done:
     return err;
 }
 
-int find_master_fd(struct steal_pty_state *steal) {
+int find_master_fd(struct steal_pty_state * steal) {
     char errbuf[_POSIX2_LINE_MAX];
-    struct filestat *fst;
-    struct filestat_list *head;
-    struct procstat *procstat;
-    struct kinfo_proc *kp;
+    struct filestat * fst;
+    struct filestat_list * head;
+    struct procstat * procstat;
+    struct kinfo_proc * kp;
     struct ptsstat pts;
     unsigned int cnt;
     int err;
@@ -234,24 +242,26 @@ int find_master_fd(struct steal_pty_state *steal) {
             continue;
 
         err = procstat_get_pts_info(procstat, fst, &pts, errbuf);
-        if (err != 0) {
-            error("error discovering fd=%d", fst->fs_fd);
-            continue;
+            if (err != 0) {
+                error("error discovering fd=%d", fst->fs_fd);
+                continue;
         }
 
         if (pts.dev != steal->target_stat.ctty)
             continue;
 
-        if (fd_array_push(&steal->master_fds, fst->fs_fd) != 0) {
-            error("unable to allocate memory for fd array");
-            return ENOMEM;
+            if (fd_array_push(&steal->master_fds, fst->fs_fd) != 0) {
+                error("unable to allocate memory for fd array");
+                return ENOMEM;
         }
     }
 
     procstat_freefiles(procstat, head);
     procstat_freeprocs(procstat, kp);
     procstat_close(procstat);
-    debug("Found %d master tty fds in child %d.", steal->master_fds.n, steal->child.pid);
+    debug("Found %d master tty fds in child %d.",
+          steal->master_fds.n,
+          steal->child.pid);
     if (steal->master_fds.n == 0)
         return ESRCH;
     return 0;
@@ -261,33 +271,32 @@ int get_pt() {
     return posix_openpt(O_RDWR | O_NOCTTY);
 }
 
-int get_process_tty_termios(pid_t pid, struct termios *tio) {
+int get_process_tty_termios(pid_t pid, struct termios * tio) {
     int err = EINVAL;
-    struct kinfo_proc *kp;
+    struct kinfo_proc * kp;
     unsigned int cnt;
-    struct filestat_list *head;
-    struct filestat *fst;
-    struct procstat *procstat;
+    struct filestat_list * head;
+    struct filestat * fst;
+    struct procstat * procstat;
     int fd = -1;
 
     head = get_procfiles(pid, &kp, &procstat, &cnt);
 
     STAILQ_FOREACH(fst, head, next) {
-        if (fst->fs_type == PS_FST_TYPE_VNODE) {
-            if (fst->fs_path) {
-                fd = open(fst->fs_path, O_RDONLY);
-                if (fd >= 0 && isatty(fd)) {
-                    if (tcgetattr(fd, tio) < 0) {
-                        err = -assert_nonzero(errno);
-                    }
-                    else {
+            if (fst->fs_type == PS_FST_TYPE_VNODE) {
+                    if (fst->fs_path) {
+                        fd = open(fst->fs_path, O_RDONLY);
+                            if (fd >= 0 && isatty(fd)) {
+                                    if (tcgetattr(fd, tio) < 0) {
+                                        err = -assert_nonzero(errno);
+                                    } else {
+                                        close(fd);
+                                        err = 0;
+                                        goto done;
+                                    }
+                        }
                         close(fd);
-                        err = 0;
-                        goto done;
-                    }
                 }
-                close(fd);
-            }
         }
     }
 
@@ -298,28 +307,28 @@ done:
     return err;
 }
 
-void move_process_group(struct ptrace_child *child, pid_t from, pid_t to) {
-    struct procstat *procstat;
-    struct kinfo_proc *kp;
+void move_process_group(struct ptrace_child * child, pid_t from, pid_t to) {
+    struct procstat * procstat;
+    struct kinfo_proc * kp;
     unsigned int cnt;
     int i;
     int err;
 
     procstat = procstat_open_sysctl();
-    cnt = 0;
-    kp = procstat_getprocs(procstat, KERN_PROC_PGRP, from, &cnt);
+    cnt      = 0;
+    kp       = procstat_getprocs(procstat, KERN_PROC_PGRP, from, &cnt);
 
-    for (i = 0; i < cnt; i++) {
-        debug("Change pgid for pid %d to %d", kp[i].ki_pid, to);
-        err = do_syscall(child, setpgid, kp[i].ki_pid, to, 0, 0, 0, 0);
-        if (err < 0)
-            error(" failed: %s", strerror(-err));
-    }
+        for (i = 0; i < cnt; i++) {
+            debug("Change pgid for pid %d to %d", kp[i].ki_pid, to);
+            err = do_syscall(child, setpgid, kp[i].ki_pid, to, 0, 0, 0, 0);
+            if (err < 0)
+                error(" failed: %s", strerror(-err));
+        }
     procstat_freeprocs(procstat, kp);
     procstat_close(procstat);
 }
 
-void copy_user(struct ptrace_child *d, struct ptrace_child *s) {
+void copy_user(struct ptrace_child * d, struct ptrace_child * s) {
     memcpy(&d->regs, &s->regs, sizeof(s->regs));
 }
 

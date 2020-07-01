@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2011 by Nelson Elhage
+/* Copyright (C) 2011 by Nelson Elhage
+ * SPDX-License-Identifier: MIT
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,11 +22,11 @@
 
 #define REPTYR_VERSION "0.7.0"
 
-#define assert_nonzero(expr) ({                         \
-            typeof(expr) __val = expr;                  \
-            if (__val == 0)                             \
-                die("Unexpected: %s == 0!\n", #expr);   \
-            __val;                                      \
+#define assert_nonzero(expr) ({                       \
+            typeof(expr) __val = expr;                \
+            if (__val == 0)                           \
+                die("Unexpected: %s == 0!\n", #expr); \
+            __val;                                    \
         })
 
 int attach_child(pid_t pid, const char *pty, int force_stdio);

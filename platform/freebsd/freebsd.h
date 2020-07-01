@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2014 Christian Heckendorf <heckendorfc@gmail.com>
+/* Copyright (C) 2014 Christian Heckendorf <heckendorfc@gmail.com>
+ * SPDX-License-Identifier: MIT
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,27 +25,28 @@
 
 #ifdef __FreeBSD__
 
-#include <stdlib.h>
-#include <kvm.h>
-#include <sys/param.h>
-#include <sys/sysctl.h>
-#include <sys/user.h>
-#include <unistd.h>
-#include <libprocstat.h>
-#include <limits.h>
-#include <fcntl.h>
-#include <termios.h>
-#include <sys/un.h>
-#include <stdio.h>
-#include <string.h>
+    #include <fcntl.h>
+    #include <kvm.h>
+    #include <libprocstat.h>
+    #include <limits.h>
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
+    #include <sys/param.h>
+    #include <sys/sysctl.h>
+    #include <sys/un.h>
+    #include <sys/user.h>
+    #include <termios.h>
+    #include <unistd.h>
 
-#define do_socketcall(child, scratch, name, a0, a1, a2, a3, a4)         \
-    ({                                                                  \
-        int __ret=-1;                                                   \
-        if (ptrace_syscall_numbers((child))->nr_##name) {               \
-            __ret = do_syscall((child), name, a0, a1, a2, a3, a4, 0);   \
-        }                                                               \
-        __ret; })
+    #define do_socketcall(child, scratch, name, a0, a1, a2, a3, a4)           \
+        ({                                                                    \
+            int __ret = -1;                                                   \
+                if (ptrace_syscall_numbers((child))->nr_##name) {             \
+                    __ret = do_syscall((child), name, a0, a1, a2, a3, a4, 0); \
+            }                                                                 \
+            __ret;                                                            \
+        })
 
 #endif
 #endif

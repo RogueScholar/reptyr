@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2011 by Nelson Elhage
+/* Copyright (C) 2011 by Nelson Elhage
+ * SPDX-License-Identifier: MIT
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,35 +20,33 @@
  * THE SOFTWARE.
  */
 
-static struct ptrace_personality arch_personality[1] = {
-    {
-        offsetof(struct pt_regs, gpr[3]),
-        offsetof(struct pt_regs, gpr[3]),
-        offsetof(struct pt_regs, gpr[4]),
-        offsetof(struct pt_regs, gpr[5]),
-        offsetof(struct pt_regs, gpr[6]),
-        offsetof(struct pt_regs, gpr[7]),
-        offsetof(struct pt_regs, gpr[8]),
-        offsetof(struct pt_regs, nip),
-    }
-};
+static struct ptrace_personality arch_personality[1] = { {
+    offsetof(struct pt_regs, gpr[3]),
+    offsetof(struct pt_regs, gpr[3]),
+    offsetof(struct pt_regs, gpr[4]),
+    offsetof(struct pt_regs, gpr[5]),
+    offsetof(struct pt_regs, gpr[6]),
+    offsetof(struct pt_regs, gpr[7]),
+    offsetof(struct pt_regs, gpr[8]),
+    offsetof(struct pt_regs, nip),
+} };
 
 static const unsigned long r0off = offsetof(struct pt_regs, gpr[0]);
 
-static inline void arch_fixup_regs(struct ptrace_child *child) {
+static inline void arch_fixup_regs(struct ptrace_child * child) {
     child->regs.nip -= 4;
 }
 
-static inline int arch_set_syscall(struct ptrace_child *child,
+static inline int arch_set_syscall(struct ptrace_child * child,
                                    unsigned long sysno) {
     return ptrace_command(child, PTRACE_POKEUSER, r0off, sysno);
 }
 
-static inline int arch_save_syscall(struct ptrace_child *child) {
+static inline int arch_save_syscall(struct ptrace_child * child) {
     child->saved_syscall = *ptr(&child->regs, r0off);
     return 0;
 }
 
-static inline int arch_restore_syscall(struct ptrace_child *child) {
+static inline int arch_restore_syscall(struct ptrace_child * child) {
     return arch_set_syscall(child, child->saved_syscall);
 }

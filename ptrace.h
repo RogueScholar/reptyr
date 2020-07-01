@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2011 by Nelson Elhage
+/* Copyright (C) 2011 by Nelson Elhage
+ * SPDX-License-Identifier: MIT
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,15 +23,14 @@
 #define PTRACE_H
 
 #ifdef __powerpc__
-#include <asm/ptrace.h>
+    #include <asm/ptrace.h>
 #endif
 #include <sys/ptrace.h>
 #include <sys/types.h>
 #include <sys/user.h>
 #include <unistd.h>
 
-/*
- * See https://github.com/nelhage/reptyr/issues/25 and
+/* See https://github.com/nelhage/reptyr/issues/25 and
  * https://github.com/nelhage/reptyr/issues/26.
  *
  * Older glibc's don't define PTRACE_{SETOPTIONS,GETEVENTMSG}, (but do
@@ -39,19 +38,24 @@
  * linux/ptrace.h conflict. If we were using autoconf or something, we
  * could potentially detect the right headers at configure-time, but
  * I'd like to avoid adding autoconf. These numbers can't ever change
- * for ABI-compatibility reasons, at least.
- */
+ * for ABI-compatibility reasons, at least. */
 #ifndef PTRACE_SETOPTIONS
-#define PTRACE_SETOPTIONS   0x4200
+    #define PTRACE_SETOPTIONS 0x4200
 #endif
 #ifndef PTRACE_GETEVENTMSG
-#define PTRACE_GETEVENTMSG  0x4201
+    #define PTRACE_GETEVENTMSG 0x4201
 #endif
 #ifndef PTRACE_GETREGSET
-#define PTRACE_GETREGSET  0x4204
+    #define PTRACE_GETREGSET 0x4204
 #endif
 #ifndef PTRACE_SETREGSET
-#define PTRACE_SETREGSET  0x4205
+    #define PTRACE_SETREGSET 0x4205
+#endif
+#ifndef PTRACE_GETREGSET
+    #define PTRACE_GETREGSET 0x4204
+#endif
+#ifndef PTRACE_SETREGSET
+    #define PTRACE_SETREGSET 0x4205
 #endif
 
 enum child_state {
@@ -72,15 +76,15 @@ struct ptrace_child {
     unsigned long forked_pid;
     unsigned long saved_syscall;
 #ifdef __linux__
-#ifdef __arm__
+    #ifdef __arm__
     struct user_regs regs;
-#elif defined(__powerpc__)
+    #elif defined(__powerpc__)
     struct pt_regs regs;
-#else
+    #else
     struct user_regs_struct regs;
-#endif
+    #endif
 #elif defined(__FreeBSD__)
-	struct reg regs;
+    struct reg regs;
 #endif
 };
 
@@ -109,23 +113,25 @@ struct syscall_numbers {
 
 typedef unsigned long child_addr_t;
 
-int ptrace_wait(struct ptrace_child *child);
-int ptrace_attach_child(struct ptrace_child *child, pid_t pid);
-int ptrace_finish_attach(struct ptrace_child *child, pid_t pid);
-int ptrace_detach_child(struct ptrace_child *child);
-int ptrace_wait(struct ptrace_child *child);
-int ptrace_advance_to_state(struct ptrace_child *child,
+int ptrace_wait(struct ptrace_child * child);
+int ptrace_attach_child(struct ptrace_child * child, pid_t pid);
+int ptrace_finish_attach(struct ptrace_child * child, pid_t pid);
+int ptrace_detach_child(struct ptrace_child * child);
+int ptrace_wait(struct ptrace_child * child);
+int ptrace_advance_to_state(struct ptrace_child * child,
                             enum child_state desired);
-int ptrace_save_regs(struct ptrace_child *child);
-int ptrace_restore_regs(struct ptrace_child *child);
-unsigned long ptrace_remote_syscall(struct ptrace_child *child,
-                                    unsigned long sysno,
-                                    unsigned long p0, unsigned long p1,
-                                    unsigned long p2, unsigned long p3,
-                                    unsigned long p4, unsigned long p5);
+int ptrace_save_regs(struct ptrace_child * child);
+int ptrace_restore_regs(struct ptrace_child * child);
+unsigned long ptrace_remote_syscall(struct ptrace_child * child,
+                                    unsigned long sysno, unsigned long p0,
+                                    unsigned long p1, unsigned long p2,
+                                    unsigned long p3, unsigned long p4,
+                                    unsigned long p5);
 
-int ptrace_memcpy_to_child(struct ptrace_child *, child_addr_t, const void*, size_t);
-int ptrace_memcpy_from_child(struct ptrace_child *, void*, child_addr_t, size_t);
-struct syscall_numbers *ptrace_syscall_numbers(struct ptrace_child *child);
+int ptrace_memcpy_to_child(struct ptrace_child *, child_addr_t, const void *,
+                           size_t);
+int ptrace_memcpy_from_child(struct ptrace_child *, void *, child_addr_t,
+                             size_t);
+struct syscall_numbers * ptrace_syscall_numbers(struct ptrace_child * child);
 
 #endif

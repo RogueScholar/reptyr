@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2011 by Nelson Elhage
+/* Copyright (C) 2011 by Nelson Elhage
+ * SPDX-License-Identifier: MIT
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,28 +24,34 @@
 #define PLATFORM_H
 
 #ifdef __APPLE__
-#error "reptyr does not currently support macOS"
+    #error "reptyr does not currently support macOS"
 #endif
 
-#include "linux/linux.h"
-#include "freebsd/freebsd.h"
 #include "../ptrace.h"
+#include "freebsd/freebsd.h"
+#include "linux/linux.h"
 
 struct fd_array {
-    int *fds;
+    int * fds;
     int n;
     int allocated;
 };
-int fd_array_push(struct fd_array *fda, int fd);
+int fd_array_push(struct fd_array * fda, int fd);
 
-#define do_syscall(child, name, a0, a1, a2, a3, a4, a5) \
-    ptrace_remote_syscall((child), ptrace_syscall_numbers((child))->nr_##name, \
-                          a0, a1, a2, a3, a4, a5)
+#define do_syscall(child, name, a0, a1, a2, a3, a4, a5)               \
+    ptrace_remote_syscall((child),                                    \
+                          ptrace_syscall_numbers((child))->nr_##name, \
+                          a0,                                         \
+                          a1,                                         \
+                          a2,                                         \
+                          a3,                                         \
+                          a4,                                         \
+                          a5)
 
 #define TASK_COMM_LENGTH 16
 struct proc_stat {
     pid_t pid;
-    char comm[TASK_COMM_LENGTH+1];
+    char comm[TASK_COMM_LENGTH + 1];
     char state;
     pid_t ppid, sid, pgid;
     dev_t ctty;
@@ -76,12 +82,12 @@ struct steal_pty_state {
 void check_ptrace_scope(void);
 int check_pgroup(pid_t target);
 int check_proc_stopped(pid_t pid, int fd);
-int *get_child_tty_fds(struct ptrace_child *child, int statfd, int *count);
-int get_terminal_state(struct steal_pty_state *steal, pid_t target);
-int find_master_fd(struct steal_pty_state *steal);
+int * get_child_tty_fds(struct ptrace_child * child, int statfd, int * count);
+int get_terminal_state(struct steal_pty_state * steal, pid_t target);
+int find_master_fd(struct steal_pty_state * steal);
 int get_pt(void);
-int get_process_tty_termios(pid_t pid, struct termios *tio);
-void move_process_group(struct ptrace_child *child, pid_t from, pid_t to);
-void copy_user(struct ptrace_child *d, struct ptrace_child *s);
+int get_process_tty_termios(pid_t pid, struct termios * tio);
+void move_process_group(struct ptrace_child * child, pid_t from, pid_t to);
+void copy_user(struct ptrace_child * d, struct ptrace_child * s);
 
 #endif

@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2011 by Nelson Elhage
+/* Copyright (C) 2011 by Nelson Elhage
+ * SPDX-License-Identifier: MIT
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,21 +21,17 @@
  */
 #include "x86_common.h"
 
-static struct ptrace_personality arch_personality[1] = {
-    {
-        offsetof(struct reg, r_eax),
-        offsetof(struct reg, r_ebx),
-        offsetof(struct reg, r_ecx),
-        offsetof(struct reg, r_edx),
-        offsetof(struct reg, r_esi),
-        offsetof(struct reg, r_edi),
-        offsetof(struct reg, r_ebp),
-        offsetof(struct reg, r_eip),
-    }
-};
+static struct ptrace_personality arch_personality[1] = { {
+    offsetof(struct reg, r_eax),
+    offsetof(struct reg, r_ebx),
+    offsetof(struct reg, r_ecx),
+    offsetof(struct reg, r_edx),
+    offsetof(struct reg, r_esi),
+    offsetof(struct reg, r_edi),
+    offsetof(struct reg, r_ebp),
+    offsetof(struct reg, r_eip),
+} };
 
-struct x86_personality x86_personality[1] = {
-    {
-        offsetof(struct reg, r_eax),
-    }
-};
+struct x86_personality x86_personality[1] = { {
+    offsetof(struct reg, r_eax),
+} };

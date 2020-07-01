@@ -1,3 +1,7 @@
+#!/usr/bin/make -f
+# -*- makefile-gmake -*-
+# SPDX-License-Identifier: MIT
+
 override CFLAGS := -MD -Wall -Werror -D_GNU_SOURCE -g $(CFLAGS)
 OBJS=reptyr.o reallocarray.o attach.o
 DEPS=$(wildcard *.d platform/*/*.d)
@@ -18,7 +22,7 @@ BINDIR=$(PREFIX)/bin
 MANDIR=$(PREFIX)/share/man
 
 PKG_CONFIG ?= pkg-config
-PYTHON_CMD ?= python2
+PYTHON_CMD ?= python3
 
 all: reptyr
 

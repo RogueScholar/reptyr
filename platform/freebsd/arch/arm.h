@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2011 by Nelson Elhage
+/* Copyright (C) 2011 by Nelson Elhage
+ * SPDX-License-Identifier: MIT
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,29 +22,27 @@
 
 #error ARM not yet supported for FreeBSD
 
-static struct ptrace_personality arch_personality[1] = {
-    {
-        offsetof(struct user, regs.uregs[0]),
-        offsetof(struct user, regs.uregs[0]),
-        offsetof(struct user, regs.uregs[1]),
-        offsetof(struct user, regs.uregs[2]),
-        offsetof(struct user, regs.uregs[3]),
-        offsetof(struct user, regs.uregs[4]),
-        offsetof(struct user, regs.uregs[5]),
-        offsetof(struct user, regs.ARM_pc),
-    }
-};
+static struct ptrace_personality arch_personality[1] = { {
+    offsetof(struct user, regs.uregs[0]),
+    offsetof(struct user, regs.uregs[0]),
+    offsetof(struct user, regs.uregs[1]),
+    offsetof(struct user, regs.uregs[2]),
+    offsetof(struct user, regs.uregs[3]),
+    offsetof(struct user, regs.uregs[4]),
+    offsetof(struct user, regs.uregs[5]),
+    offsetof(struct user, regs.ARM_pc),
+} };
 
-static inline void arch_fixup_regs(struct ptrace_child *child) {
+static inline void arch_fixup_regs(struct ptrace_child * child) {
     child->user.regs.ARM_pc -= 4;
 }
 
-static inline int arch_set_syscall(struct ptrace_child *child,
+static inline int arch_set_syscall(struct ptrace_child * child,
                                    unsigned long sysno) {
     return ptrace_command(child, PTRACE_SET_SYSCALL, 0, sysno);
 }
 
-static inline int arch_save_syscall(struct ptrace_child *child) {
+static inline int arch_save_syscall(struct ptrace_child * child) {
     unsigned long swi;
     swi = ptrace_command(child, PTRACE_PEEKTEXT, child->user.regs.ARM_pc);
     if (child->error)
@@ -56,6 +54,6 @@ static inline int arch_save_syscall(struct ptrace_child *child) {
     return 0;
 }
 
-static inline int arch_restore_syscall(struct ptrace_child *child) {
+static inline int arch_restore_syscall(struct ptrace_child * child) {
     return arch_set_syscall(child, child->saved_syscall);
 }

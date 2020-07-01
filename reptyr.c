@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2011 by Nelson Elhage
+/* Copyright (C) 2011 by Nelson Elhage
+ * SPDX-License-Identifier: MIT
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,18 +19,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/select.h>
+
 #include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/types.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <string.h>
-#include <stdarg.h>
 #include <termios.h>
-#include <signal.h>
+#include <unistd.h>
 
 #include "reptyr.h"
 #include "reallocarray.h"
@@ -39,7 +40,6 @@
 static int verbose = 0;
 
 void _debug(const char *pfx, const char *msg, va_list ap) {
-
     if (pfx)
         fprintf(stderr, "%s", pfx);
     vfprintf(stderr, msg, ap);
@@ -56,10 +56,9 @@ void die(const char *msg, ...) {
 }
 
 void debug(const char *msg, ...) {
-
     va_list ap;
 
-    if (!verbose)
+    if (! verbose)
         return;
 
     va_start(ap, msg);
@@ -90,7 +89,7 @@ void resize_pty(int pty) {
     struct winsize sz;
     if (ioctl(0, TIOCGWINSZ, &sz) < 0) {
         // provide fake size to workaround some problems
-        struct winsize defaultsize = {30, 80, 640, 480};
+        struct winsize defaultsize = { 30, 80, 640, 480 };
         if (ioctl(pty, TIOCSWINSZ, &defaultsize) < 0) {
             fprintf(stderr, "Cannot set terminal size\n");
         }
@@ -137,7 +136,7 @@ void do_proxy(int pty) {
         return;
     }
     sa.sa_handler = do_winch;
-    sa.sa_flags = 0;
+    sa.sa_flags   = 0;
     sigemptyset(&sa.sa_mask);
     sigaction(SIGWINCH, &sa, NULL);
     resize_pty(pty);
@@ -175,13 +174,20 @@ void do_proxy(int pty) {
 void usage(char *me) {
     fprintf(stderr, "Usage: %s [-s] PID\n", me);
     fprintf(stderr, "       %s -l|-L [COMMAND [ARGS]]\n", me);
-    fprintf(stderr, "  -l    Create a new pty pair and print the name of the slave.\n");
-    fprintf(stderr, "           if there are command-line arguments after -l\n");
-    fprintf(stderr, "           they are executed with REPTYR_PTY set to path of pty.\n");
-    fprintf(stderr, "  -L    Like '-l', but also redirect the child's stdio to the slave.\n");
-    fprintf(stderr, "  -s    Attach fds 0-2 on the target, even if it is not attached to a tty.\n");
-    fprintf(stderr, "  -T    Steal the entire terminal session of the target.\n");
-    fprintf(stderr, "           [experimental] May be more reliable, and will attach all\n");
+    fprintf(stderr,
+            "  -l    Create a new pty pair and print the name of the slave.\n");
+    fprintf(stderr,
+            "         if there are command-line arguments after -l\n");
+    fprintf(stderr,
+            "         they are executed with REPTYR_PTY set to path of pty.\n");
+    fprintf(stderr,
+            "  -L    Like '-l', but also redirect child's stdio to slave.\n");
+    fprintf(stderr,
+            "  -s    Attach fds 0-2 on target, even if not attached to tty.\n");
+    fprintf(stderr,
+            "  -T    Steal the entire terminal session of the target.\n");
+    fprintf(stderr,
+            "      [experimental] May be more reliable, and will attach all\n");
     fprintf(stderr, "           processes running on the terminal.\n");
     fprintf(stderr, "  -h    Print this help message and exit.\n");
     fprintf(stderr, "  -v    Print the version number and exit.\n");
@@ -193,42 +199,43 @@ int main(int argc, char **argv) {
     int pty;
     int opt;
     int err;
-    int do_attach = 1;
-    int force_stdio = 0;
-    int do_steal = 0;
+    int do_attach                     = 1;
+    int force_stdio                   = 0;
+    int do_steal                      = 0;
     int unattached_script_redirection = 0;
 
     while ((opt = getopt(argc, argv, "hlLsTvV")) != -1) {
         switch (opt) {
-        case 'h':
-            usage(argv[0]);
-            return 0;
-        case 'l':
-            do_attach = 0;
-            break;
-        case 'L':
-            do_attach = 0;
-            unattached_script_redirection = 1;
-            break;
-        case 's':
-            force_stdio = 1;
-            break;
-        case 'T':
-            do_steal = 1;
-            break;
-        case 'v':
-            printf("This is reptyr version %s.\n", REPTYR_VERSION);
-            printf(" by Nelson Elhage <nelhage@nelhage.com>\n");
-            printf("http://github.com/nelhage/reptyr/\n");
-            return 0;
-        case 'V':
-            verbose = 1;
-            break;
-        default:
-            usage(argv[0]);
-            return 1;
+            case 'h':
+                usage(argv[0]);
+                return 0;
+            case 'l':
+                do_attach = 0;
+                break;
+            case 'L':
+                do_attach                     = 0;
+                unattached_script_redirection = 1;
+                break;
+            case 's':
+                force_stdio = 1;
+                break;
+            case 'T':
+                do_steal = 1;
+                break;
+            case 'v':
+                printf("This is reptyr version %s.\n", REPTYR_VERSION);
+                printf(" by Nelson Elhage <nelhage@nelhage.com>\n");
+                printf("http://github.com/nelhage/reptyr/\n");
+                return 0;
+            case 'V':
+                verbose = 1;
+                break;
+            default:
+                usage(argv[0]);
+                return 1;
         }
-        if (opt == 'l' || opt == 'L') break; // the rest is a command line
+        if (opt == 'l' || opt == 'L')
+                break;  // the rest is a command line
     }
 
     if (do_attach && optind >= argc) {
@@ -237,7 +244,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    if (!do_steal) {
+    if (! do_steal) {
         if ((pty = get_pt()) < 0)
             die("Unable to allocate a new pseudo-terminal: %m");
         if (unlockpt(pty) < 0)
@@ -248,15 +255,16 @@ int main(int argc, char **argv) {
 
     if (do_attach) {
         char *endptr = NULL;
-        errno = 0;
-        long t = strtol(argv[optind], &endptr, 10);
+        errno        = 0;
+        long t       = strtol(argv[optind], &endptr, 10);
         if (errno == ERANGE)
             die("Invalid pid: %m");
         if (*endptr)
             die("Invalid pid: must be integer");
         /* check for overflow/underflow */
         pid_t child = (pid_t)t;
-        if (child < t || t < 1) /* pids can't be < 1, so no *real* underflow check */
+        if (child < t || t < 1)
+            /* pids can't be < 1, so no *real* underflow check */
             die("Invalid pid: %s", strerror(ERANGE));
 
         if (do_steal) {
@@ -265,7 +273,8 @@ int main(int argc, char **argv) {
             err = attach_child(child, ptsname(pty), force_stdio);
         }
         if (err) {
-            fprintf(stderr, "Unable to attach to pid %d: %s\n", child, strerror(err));
+            fprintf(stderr, "Unable to attach to pid %d: %s\n", child,
+                    strerror(err));
             if (err == EPERM) {
                 check_ptrace_scope();
             }

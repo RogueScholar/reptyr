@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2011 by Nelson Elhage
+/* Copyright (C) 2011 by Nelson Elhage
+ * SPDX-License-Identifier: MIT
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,11 +22,12 @@
 
 #ifdef __linux__
 
-#include "linux.h"
-#include "../platform.h"
-#include "../../reptyr.h"
-#include "../../ptrace.h"
-#include <stdint.h>
+    #include "linux.h"
+    #include "../platform.h"
+    #include "../../reptyr.h"
+    #include "../../ptrace.h"
+
+    #include <stdint.h>
 
 int parse_proc_stat(int statfd, struct proc_stat *out) {
     char buf[1024];
@@ -36,9 +37,9 @@ int parse_proc_stat(int statfd, struct proc_stat *out) {
     if (read(statfd, buf, sizeof buf) < 0)
         return assert_nonzero(errno);
     n = sscanf(buf, "%d (%16[^)]) %c %d %d %d %u",
-               &out->pid, out->comm,
-               &out->state, &out->ppid, &out->pgid,
-               &out->sid, &dev);
+               &out->pid, out->comm, &out->state,
+               &out->ppid, &out->pgid, &out->sid,
+               &dev);
     if (n == EOF)
         return assert_nonzero(errno);
     if (n != 7) {
@@ -61,7 +62,6 @@ int read_proc_stat(pid_t pid, struct proc_stat *out) {
         return -statfd;
     }
     err = parse_proc_stat(statfd, out);
-
 
     close(statfd);
     return err;
@@ -89,7 +89,7 @@ int read_uid(pid_t pid, uid_t *out) {
     while (p < buf + n) {
         if (strncmp(p, "Uid:\t", strlen("Uid:\t")) == 0)
             break;
-        p = memchr(p, '\n', buf+n-p);
+        p = memchr(p, '\n', buf + n - p);
         if (p == NULL)
             break;
         p++;
@@ -100,11 +100,11 @@ int read_uid(pid_t pid, uid_t *out) {
         *out = -1;
         goto out;
     }
-    if(sscanf(p, "Uid:\t%d", out) < 0) {
+    if (sscanf(p, "Uid:\t%d", out) < 0) {
         debug("Unable to parse emulator uid: unparseable Uid line");
     }
 
- out:
+out:
     close(statfd);
     return err;
 }
@@ -115,7 +115,7 @@ int read_uid(pid_t pid, uid_t *out) {
 // leader. This is true in most cases, although in principle you can
 // construct situations where it is false. We should fail safe later
 // on if this turns out to be wrong, however.
-int find_terminal_emulator(struct steal_pty_state *steal) {
+int find_terminal_emulator(struct steal_pty_state * steal) {
     debug("session leader of pid %d = %d",
           (int)steal->target_stat.pid,
           (int)steal->target_stat.sid);
@@ -123,7 +123,7 @@ int find_terminal_emulator(struct steal_pty_state *steal) {
     int err;
     if ((err = read_proc_stat(steal->target_stat.sid, &leader_st)))
         return err;
-    debug("found terminal emulator process: %d", (int) leader_st.ppid);
+    debug("found terminal emulator process: %d", (int)leader_st.ppid);
     steal->emulator_pid = leader_st.ppid;
     return 0;
 }
@@ -136,14 +136,18 @@ void check_ptrace_scope(void) {
         n = read(fd, buf, sizeof buf);
         close(fd);
         if (n > 0) {
-            if (!atoi(buf)) {
+            if (! atoi(buf)) {
                 return;
             }
         }
     } else if (errno == ENOENT)
         return;
-    fprintf(stderr, "The kernel denied permission while attaching. If your uid matches\n");
-    fprintf(stderr, "the target's, check the value of /proc/sys/kernel/yama/ptrace_scope.\n");
+    fprintf(
+        stderr,
+        "The kernel denied permission while attaching. If your uid matches\n");
+    fprintf(
+        stderr,
+        "the target's, check the value of /proc/sys/kernel/yama/ptrace_scope.\n");
     fprintf(stderr, "For more information, see /etc/sysctl.d/10-ptrace.conf\n");
 }
 
@@ -168,24 +172,26 @@ int check_pgroup(pid_t target) {
         return assert_nonzero(errno);
 
     while ((d = readdir(dir)) != NULL) {
-        if (d->d_name[0] == '.') continue;
+        if (d->d_name[0] == '.')
+            continue;
         pid = strtol(d->d_name, &p, 10);
-        if (*p) continue;
-        if (pid == target) continue;
+        if (*p)
+            continue;
+        if (pid == target)
+            continue;
         if (getpgid(pid) == pg) {
-            /*
-             * We are actually being somewhat overly-conservative here
-             * -- if pid is a child of target, and has not yet called
-             * execve(), reptyr's setpgid() strategy may suffice. That
-             * is a fairly rare case, and annoying to check for, so
-             * for now let's just bail out.
-             */
+            /* We are actually being somewhat overly-conservative here -- if pid
+             * is a child of target, and has not yet called execve(), reptyr's
+             * setpgid() strategy may suffice. That is a fairly rare case,
+             * and annoying to check for, so for now let's just bail out. */
             if ((err = read_proc_stat(pid, &pid_stat))) {
                 memcpy(pid_stat.comm, "???", 4);
             }
-            error("Process %d (%.*s) shares %d's process group. Unable to attach.\n"
-                  "(This most commonly means that %d has sub-processes).",
-                  (int)pid, TASK_COMM_LENGTH, pid_stat.comm, (int)target, (int)target);
+            error(
+                "Process %d (%.*s) shares %d's process group. Unable to attach.\n"
+                "(This most commonly means that %d has sub-processes).",
+                (int)pid, TASK_COMM_LENGTH, pid_stat.comm, (int)target,
+                (int)target);
             err = EINVAL;
             goto out;
         }
@@ -229,7 +235,7 @@ int *get_child_tty_fds(struct ptrace_child *child, int statfd, int *count) {
 
     if (stat("/dev/console", &console_st) < 0) {
         error("Unable to stat /dev/console");
-        console_st = (struct stat){
+        console_st = (struct stat) {
             .st_rdev = -1,
         };
     }
@@ -238,7 +244,8 @@ int *get_child_tty_fds(struct ptrace_child *child, int statfd, int *count) {
     if ((dir = opendir(buf)) == NULL)
         return NULL;
     while ((d = readdir(dir)) != NULL) {
-        if (d->d_name[0] == '.') continue;
+        if (d->d_name[0] == '.')
+            continue;
         snprintf(buf, sizeof buf, "/proc/%d/fd/%s", child->pid, d->d_name);
         if (stat(buf, &st) < 0)
             continue;
@@ -254,7 +261,7 @@ int *get_child_tty_fds(struct ptrace_child *child, int statfd, int *count) {
             }
         }
     }
- out:
+out:
     *count = fds.n;
     closedir(dir);
     return fds.fds;
@@ -280,11 +287,11 @@ int get_terminal_state(struct steal_pty_state *steal, pid_t target) {
     return 0;
 }
 
-// ptmx(4) and Linux Documentation/devices.txt document
-// /dev/ptmx has having major 5 and minor 2. I can't find any
-// constants in headers after a brief glance that I should be
-// using here.
-#define PTMX_DEVICE (makedev(5, 2))
+    // ptmx(4) and Linux Documentation/devices.txt document
+    // /dev/ptmx has having major 5 and minor 2. I can't find any
+    // constants in headers after a brief glance that I should be
+    // using here.
+    #define PTMX_DEVICE (makedev(5, 2))
 
 // Find the fd(s) in the terminal emulator process that corresponds to
 // the master side of the target's pty. Store the result in
@@ -300,8 +307,10 @@ int find_master_fd(struct steal_pty_state *steal) {
     if ((dir = opendir(buf)) == NULL)
         return errno;
     while ((d = readdir(dir)) != NULL) {
-        if (d->d_name[0] == '.') continue;
-        snprintf(buf, sizeof buf, "/proc/%d/fd/%s", steal->child.pid, d->d_name);
+        if (d->d_name[0] == '.')
+            continue;
+        snprintf(
+            buf, sizeof buf, "/proc/%d/fd/%s", steal->child.pid, d->d_name);
         if (stat(buf, &st) < 0)
             continue;
 
@@ -311,18 +320,15 @@ int find_master_fd(struct steal_pty_state *steal) {
             continue;
 
         debug("found a ptmx fd: %s", d->d_name);
-        err = do_syscall(&steal->child, ioctl,
-                         atoi(d->d_name),
-                         TIOCGPTN,
-                         steal->child_scratch,
-                         0, 0, 0);
+        err = do_syscall(&steal->child, ioctl, atoi(d->d_name), TIOCGPTN,
+                         steal->child_scratch, 0, 0, 0);
         if (err < 0) {
             debug(" error doing TIOCGPTN: %s", strerror(-err));
             continue;
         }
         int ptn;
-        err = ptrace_memcpy_from_child(&steal->child, &ptn,
-                                       steal->child_scratch, sizeof(ptn));
+        err = ptrace_memcpy_from_child(
+                &steal->child, &ptn, steal->child_scratch, sizeof(ptn));
         if (err < 0) {
             debug(" error getting ptn: %s", strerror(steal->child.error));
             continue;
@@ -362,7 +368,7 @@ int get_process_tty_termios(pid_t pid, struct termios *tio) {
             continue;
         }
 
-        if (!isatty(fd)) {
+        if (! isatty(fd)) {
             err = ENOTTY;
             goto retry;
         }
@@ -370,7 +376,7 @@ int get_process_tty_termios(pid_t pid, struct termios *tio) {
         if (tcgetattr(fd, tio) < 0) {
             err = -assert_nonzero(errno);
         }
-retry:
+    retry:
         close(fd);
     }
 
@@ -388,9 +394,11 @@ void move_process_group(struct ptrace_child *child, pid_t from, pid_t to) {
         return;
 
     while ((d = readdir(dir)) != NULL) {
-        if (d->d_name[0] == '.') continue;
+        if (d->d_name[0] == '.')
+            continue;
         pid = strtol(d->d_name, &p, 10);
-        if (*p) continue;
+        if (*p)
+            continue;
         if (getpgid(pid) == from) {
             debug("Change pgid for pid %d", pid);
             err = do_syscall(child, setpgid, pid, to, 0, 0, 0, 0);
@@ -401,21 +409,19 @@ void move_process_group(struct ptrace_child *child, pid_t from, pid_t to) {
     closedir(dir);
 }
 
-void copy_user(struct ptrace_child *d, struct ptrace_child *s) {
+void copy_user(struct ptrace_child * d, struct ptrace_child * s) {
     memcpy(&d->regs, &s->regs, sizeof(s->regs));
 }
 
 unsigned long ptrace_socketcall(struct ptrace_child *child,
-                                unsigned long scratch,
-                                unsigned long socketcall,
+                                unsigned long scratch, unsigned long socketcall,
                                 unsigned long p0, unsigned long p1,
                                 unsigned long p2, unsigned long p3,
-                                unsigned long p4)
-{
-    // We assume that socketcall is only used on 32-bit
-    // architectures. If there are any 64-bit architectures that do
-    // socketcall, and we port to them, this will need to change.
-    uint32_t args[] = {p0, p1, p2, p3, p4};
+                                unsigned long p4) {
+    // We assume that socketcall is only used on 32-bit architectures. If there
+    // are any 64-bit architectures that do socketcall, and we port to them,
+    // this will need to change.
+    uint32_t args[] = { p0, p1, p2, p3, p4 };
     int err;
 
     err = ptrace_memcpy_to_child(child, scratch, &args, sizeof args);
@@ -423,6 +429,5 @@ unsigned long ptrace_socketcall(struct ptrace_child *child,
         return (unsigned long)err;
     return do_syscall(child, socketcall, socketcall, scratch, 0, 0, 0, 0);
 }
-
 
 #endif

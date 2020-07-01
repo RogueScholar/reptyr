@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT */
+
 #define SC(name) .nr_##name = SYS_##name
 
 {
@@ -18,7 +20,7 @@
 #ifdef SYS_signal
     SC(signal),
 #else
-     .nr_signal = -1,
+    .nr_signal = -1,
 #endif
     .nr_rt_sigaction = SYS_sigaction,
     SC(openat),
