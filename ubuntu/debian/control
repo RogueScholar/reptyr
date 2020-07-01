@@ -1,17 +1,18 @@
 Source: reptyr
-Maintainer: Peter J. Mello <admin@petermello.net>
 Section: misc
 Priority: optional
-Build-Depends: debhelper-compat (= 12), dpkg-dev (>= 1.16.1), python,
-  python-pexpect
-Standards-Version: 4.3.0
+Maintainer: Peter J. Mello <admin@petermello.net>
+Build-Depends: debhelper-compat (= 12), dh-sequence-python2,
+ dpkg-dev (>= 1.16.1), python2, python-pexpect
+Standards-Version: 4.5.0
 Homepage: https://github.com/nelhage/reptyr
-Vcs-Browser: https://github.com/nelhage/reptyr/tree/debian
 Vcs-Git: https://github.com/nelhage/reptyr.git -b debian
+Vcs-Browser: https://github.com/nelhage/reptyr/tree/debian
+Rules-Requires-Root: no
 
 Package: reptyr
-Architecture: i386 amd64 armel armhf arm64 powerpc
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Architecture: amd64 i386 arm64 armhf armel powerpc
+Depends: ${shlibs:Depends}, ${python:Depends}, ${misc:Depends}
 Description: Tool for moving running programs between ptys
  reptyr is a utility for taking an existing running program and
  attaching it to a new terminal, and is particularly useful for moving

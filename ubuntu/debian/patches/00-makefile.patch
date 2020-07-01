@@ -2,12 +2,13 @@ Description: Change the install prefix
  Upstream has a peculiar way of writing the install directive in the Makefile.
  I changed it to allow the package build to work properly, which included
  changing the prefix from /usr/local to /usr.
-Origin: maintainer
+Author: Peter J. Mello <admin@petermello.net>
+Origin: vendor
 Forwarded: no
 Last-Update: 2019-05-14
 
---- reptyr-0.7.0~ppa.orig/Makefile
-+++ reptyr-0.7.0~ppa/Makefile
+--- a/Makefile
++++ b/Makefile
 @@ -8,11 +8,8 @@ ifeq ($(UNAME_S),FreeBSD)
  	OBJS += platform/freebsd/freebsd_ptrace.o platform/freebsd/freebsd.o
  	LDFLAGS += -lprocstat
@@ -21,10 +22,10 @@ Last-Update: 2019-05-14
 +PREFIX=/usr
  BINDIR=$(PREFIX)/bin
  MANDIR=$(PREFIX)/share/man
- 
+
 @@ -46,15 +43,16 @@ clean:
  BASHCOMPDIR ?= $(shell $(PKG_CONFIG) --variable=completionsdir bash-completion 2>/dev/null)
- 
+
  install: reptyr
 -	install -d -m 755 $(DESTDIR)$(BINDIR)
 -	install -m 755 reptyr $(DESTDIR)$(BINDIR)/reptyr
@@ -44,6 +45,6 @@ Last-Update: 2019-05-14
 -	install -m 644 reptyr.bash $(DESTDIR)$$bashcompdir/reptyr
 +	install -d -m 0755 $(DESTDIR)$$bashcompdir ; \
 +	install -D -m 0644 reptyr.bash $(DESTDIR)$$bashcompdir/reptyr
- 
+
  .PHONY: PHONY
 +

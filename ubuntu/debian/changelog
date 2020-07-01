@@ -1,4 +1,10 @@
-reptyr (0.7.0-1~ppa) bionic; urgency=medium
+reptyr (0.7.0-2) focal; urgency=medium
+
+  * Update package for Ubuntu 20.04 LTS "Focal Fossa"
+
+ -- Peter J. Mello <admin@petermello.net>  Sat, 27 Jun 2020 18:47:04 -0700
+
+reptyr (0.7.0-1) bionic; urgency=medium
 
   * No-changes build from source from repository tag
   * Add bash completion support
