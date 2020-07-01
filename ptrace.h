@@ -22,6 +22,9 @@
 #ifndef PTRACE_H
 #define PTRACE_H
 
+#ifdef __powerpc__
+#include <asm/ptrace.h>
+#endif
 #include <sys/ptrace.h>
 #include <sys/types.h>
 #include <sys/user.h>
@@ -43,6 +46,12 @@
 #endif
 #ifndef PTRACE_GETEVENTMSG
 #define PTRACE_GETEVENTMSG  0x4201
+#endif
+#ifndef PTRACE_GETREGSET
+#define PTRACE_GETREGSET  0x4204
+#endif
+#ifndef PTRACE_SETREGSET
+#define PTRACE_SETREGSET  0x4205
 #endif
 
 enum child_state {
